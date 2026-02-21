@@ -318,6 +318,22 @@ pre { background: var(--code-bg); border: 1px solid var(--border); border-top: 0
 .lc-disconnect-btn { font-size: 12px; color: var(--red); font-weight: 700; cursor: pointer; padding: 5px 10px; border: 1px solid #f8514944; border-radius: 8px; background: #f8514915; }
 .lc-privacy { background: var(--card2); border-radius: 12px; padding: 12px; margin-top: 14px; font-size: 11px; color: var(--muted); line-height: 1.9; }
 
+/* BOOKMARKLET */
+.bm-section { background: linear-gradient(135deg, #1a2050, #0d1117); border: 1px solid #58a6ff44; border-radius: 16px; padding: 16px; margin-bottom: 16px; }
+.bm-easy-label { font-size: 11px; font-weight: 800; color: var(--accent); text-transform: uppercase; letter-spacing: .8px; margin-bottom: 8px; display: flex; align-items: center; gap: 6px; }
+.bm-title { font-size: 15px; font-weight: 800; color: var(--text); margin-bottom: 5px; }
+.bm-sub { font-size: 12px; color: var(--text2); line-height: 1.6; margin-bottom: 14px; }
+.bm-drag-area { background: var(--card2); border: 2px dashed var(--accent); border-radius: 12px; padding: 14px; text-align: center; cursor: grab; }
+.bm-link { display: inline-block; background: var(--accent); color: #fff; font-size: 14px; font-weight: 800; padding: 9px 22px; border-radius: 10px; cursor: grab; text-decoration: none; user-select: none; margin-bottom: 8px; transition: transform .1s; }
+.bm-link:active { transform: scale(.96); }
+.bm-drag-hint { font-size: 11px; color: var(--muted); margin-top: 6px; }
+.bm-steps { margin-top: 12px; }
+.bm-step-row { display: flex; gap: 8px; align-items: flex-start; margin-bottom: 8px; font-size: 12px; color: var(--text2); }
+.bm-step-n { width: 18px; height: 18px; border-radius: 50%; background: #58a6ff22; border: 1px solid #58a6ff44; display: flex; align-items: center; justify-content: center; font-size: 10px; font-weight: 800; color: var(--accent); flex-shrink: 0; margin-top: 1px; }
+.bm-divider { display: flex; align-items: center; gap: 10px; margin: 16px 0; }
+.bm-divider-line { flex: 1; height: 1px; background: var(--border); }
+.bm-divider-txt { font-size: 11px; color: var(--muted); font-weight: 700; }
+
 /* TOOLTIP */
 .feature-chip { display: inline-flex; align-items: center; gap: 5px; padding: 5px 10px; background: #3fb95022; border: 1px solid #3fb95044; border-radius: 20px; font-size: 11px; color: var(--green); font-weight: 600; margin: 2px; }
 
@@ -639,6 +655,31 @@ pre { background: var(--code-bg); border: 1px solid var(--border); border-top: 0
 
       <!-- Setup form -->
       <div id="lc-setup-state">
+
+        <!-- ★ EASY WAY: Bookmarklet -->
+        <div class="bm-section">
+          <div class="bm-easy-label">⚡ Easy Way — One Click</div>
+          <div class="bm-title">Use the LeetCode Login Bookmarklet</div>
+          <div class="bm-sub">Drag the button below to your bookmarks bar. Then go to LeetCode (while logged in) and click it — you'll be connected instantly!</div>
+          <div class="bm-drag-area">
+            <a id="bm-link" class="bm-link" href="#" onclick="return false;" title="Drag me to your bookmarks bar!">🔑 Connect to DSA Prep</a>
+            <div class="bm-drag-hint">👆 Drag this button to your bookmarks bar (or right-click → Bookmark)</div>
+          </div>
+          <div class="bm-steps">
+            <div class="bm-step-row"><div class="bm-step-n">1</div><span>Drag the button above to your <b>bookmarks bar</b></span></div>
+            <div class="bm-step-row"><div class="bm-step-n">2</div><span>Go to <a href="https://leetcode.com" target="_blank" style="color:var(--accent)">leetcode.com</a> and make sure you're <b>logged in</b></span></div>
+            <div class="bm-step-row"><div class="bm-step-n">3</div><span>Click the <b>"Connect to DSA Prep"</b> bookmark — done! ✅</span></div>
+          </div>
+        </div>
+
+        <!-- Divider -->
+        <div class="bm-divider">
+          <div class="bm-divider-line"></div>
+          <div class="bm-divider-txt">OR MANUAL WAY</div>
+          <div class="bm-divider-line"></div>
+        </div>
+
+        <!-- Manual Way: DevTools cookies -->
         <div class="lc-step">
           <div class="lc-step-num">1</div>
           <div class="lc-step-body">
@@ -671,7 +712,7 @@ pre { background: var(--code-bg); border: 1px solid var(--border); border-top: 0
         <button class="lc-connect-action" id="lc-connect-btn" onclick="connectLC()">🔗 Connect & Verify</button>
 
         <div class="lc-privacy">
-          🔒 Your cookies stay in your browser only (localStorage). They're never sent to any server except leetcode.com.
+          🔒 Your cookies stay in your browser only (localStorage). They're never sent to any server except LeetCode's own API via our proxy.
         </div>
       </div>
     </div>
@@ -721,6 +762,68 @@ let lcUsername = localStorage.getItem('lc_username') || '';
 let lcFetchCache = {}; // { [problemId]: { cpp: {...}, java: {...} } }
 
 function isLCConnected() { return !!(lcSession && lcCsrf && lcUsername); }
+
+// ─────────────────────────────────────────────
+// BOOKMARKLET
+// ─────────────────────────────────────────────
+// Build the bookmarklet href dynamically so the return URL is always correct.
+function buildBookmarklet() {
+  const returnURL = window.location.origin + window.location.pathname;
+  const code = `(function(){` +
+    `var s=document.cookie.match(/LEETCODE_SESSION=([^;]+)/);` +
+    `var c=document.cookie.match(/csrftoken=([^;]+)/);` +
+    `if(s&&c){` +
+      `window.location='${returnURL}#lc-auth='+encodeURIComponent(JSON.stringify({session:s[1],csrf:c[1]}));` +
+    `}else{` +
+      `alert('❌ Could not read cookies. Make sure you are logged in to leetcode.com and try again.');` +
+    `}` +
+  `})();`;
+  const el = document.getElementById('bm-link');
+  if (el) el.href = 'javascript:' + code;
+}
+
+// On page load: check for #lc-auth= hash from bookmarklet redirect
+async function checkBookmarkletAuth() {
+  const hash = window.location.hash;
+  if (!hash.startsWith('#lc-auth=')) return;
+  try {
+    const raw = decodeURIComponent(hash.slice(9));
+    const data = JSON.parse(raw);
+    if (!data.session || !data.csrf) throw new Error('Missing fields');
+
+    // Clear hash from URL immediately (no browser history entry)
+    history.replaceState(null, '', window.location.pathname);
+
+    // Temporarily set for verification
+    lcSession = data.session;
+    lcCsrf    = data.csrf;
+
+    showToast('⏳ Verifying LeetCode session...', 'accent');
+
+    try {
+      const resp = await fetch(PROXY_URL, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', 'X-LC-Session': lcSession, 'X-LC-Csrf': lcCsrf },
+        body: JSON.stringify({ query: 'query { userStatus { username isSignedIn } }', variables: {} }),
+      });
+      const json = await resp.json();
+      const status = json?.data?.userStatus;
+      if (!status?.isSignedIn) throw new Error('Not signed in');
+
+      lcUsername = status.username;
+      localStorage.setItem('lc_session', lcSession);
+      localStorage.setItem('lc_csrf', lcCsrf);
+      localStorage.setItem('lc_username', lcUsername);
+      updateLCStatusBtn();
+      showToast('✅ Connected as @' + lcUsername + ' — ready to fetch!');
+    } catch (e) {
+      lcSession = ''; lcCsrf = '';
+      showToast('❌ Could not verify: ' + e.message, 'red');
+    }
+  } catch (e) {
+    history.replaceState(null, '', window.location.pathname);
+  }
+}
 
 // ─────────────────────────────────────────────
 // LEETCODE GRAPHQL
@@ -805,6 +908,7 @@ async function fetchLCSubmissions(problem) {
 // LC MODAL
 // ─────────────────────────────────────────────
 function openLCModal() {
+  buildBookmarklet();
   updateLCModalState();
   document.getElementById('lc-modal-overlay').classList.add('open');
 }
@@ -1623,8 +1727,8 @@ function copyCode(btn, code) {
 // TOAST UTILITY
 // ─────────────────────────────────────────────
 function showToast(msg, color) {
-  const borderColor = color==='red' ? '#f8514944' : color==='orange' ? '#f0883e44' : '#3fb95044';
-  const textColor   = color==='red' ? '#F85149' : color==='orange' ? '#F0883E' : '#3FB950';
+  const borderColor = color==='red' ? '#f8514944' : color==='orange' ? '#f0883e44' : color==='accent' ? '#58a6ff44' : '#3fb95044';
+  const textColor   = color==='red' ? '#F85149' : color==='orange' ? '#F0883E' : color==='accent' ? '#58A6FF' : '#3FB950';
   const toast = document.createElement('div');
   toast.style.cssText = `position:fixed;bottom:120px;left:50%;transform:translateX(-50%);background:#161B22;border:1px solid ${borderColor};color:${textColor};padding:10px 20px;border-radius:12px;font-size:13px;font-weight:600;z-index:9999;white-space:nowrap;box-shadow:0 4px 20px #00000088;`;
   toast.textContent = msg;
@@ -1638,6 +1742,10 @@ function showToast(msg, color) {
 showScreen('home');
 // Restore LC status badge if already connected
 setTimeout(updateLCStatusBtn, 100);
+// Build bookmarklet href (needs window.location so must run after page load)
+setTimeout(buildBookmarklet, 50);
+// Check if bookmarklet redirected us back with auth data in hash
+checkBookmarkletAuth();
 </script>
 </body>
 </html>
