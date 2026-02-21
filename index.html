@@ -711,9 +711,9 @@ progress = { 'tp-001':'done','tp-002':'done','tp-003':'revisit','sw-001':'done',
 // ─────────────────────────────────────────────
 // LEETCODE STATE
 // ─────────────────────────────────────────────
-// Your Cloudflare Worker proxy URL — replace after deploying the worker
-// See: /worker/leetcode-proxy.js in the project
-let PROXY_URL = localStorage.getItem('lc_proxy_url') || '';
+// Cloudflare Worker proxy — handles CORS for LeetCode API calls
+const PROXY_URL_DEFAULT = 'https://lc-proxy.ravicodes2208.workers.dev';
+let PROXY_URL = localStorage.getItem('lc_proxy_url') || PROXY_URL_DEFAULT;
 
 let lcSession  = localStorage.getItem('lc_session') || '';
 let lcCsrf     = localStorage.getItem('lc_csrf')    || '';
@@ -842,18 +842,6 @@ async function connectLC() {
   const btn     = document.getElementById('lc-connect-btn');
 
   if (!session || !csrf) { showLCError('Please paste both cookie values.'); return; }
-
-  // Check if proxy URL is set
-  if (!PROXY_URL) {
-    // Ask for proxy URL
-    const proxyUrl = window.prompt(
-      '⚠️ Proxy URL needed!\n\nDeploy the Cloudflare Worker first (see /worker/leetcode-proxy.js)\nthen paste your Worker URL here:\n\n(e.g. https://lc-proxy.yourname.workers.dev)',
-      ''
-    );
-    if (!proxyUrl?.trim()) { showLCError('Proxy URL is required to fetch from LeetCode.'); return; }
-    PROXY_URL = proxyUrl.trim();
-    localStorage.setItem('lc_proxy_url', PROXY_URL);
-  }
 
   btn.disabled = true;
   btn.textContent = '⏳ Verifying...';
