@@ -639,7 +639,7 @@ pre { background: var(--code-bg); border: 1px solid var(--border); border-top: 0
     <div class="lc-modal" onclick="event.stopPropagation()">
       <div class="lc-modal-handle"></div>
       <div class="lc-modal-title">🔗 Connect LeetCode</div>
-      <div class="lc-modal-sub">Link your account to automatically pull your accepted submissions — no copy-pasting.</div>
+      <div class="lc-modal-sub">Sign in with your LeetCode credentials to automatically pull your accepted submissions.</div>
 
       <!-- Connected state -->
       <div id="lc-connected-state" style="display:none">
@@ -656,63 +656,19 @@ pre { background: var(--code-bg); border: 1px solid var(--border); border-top: 0
       <!-- Setup form -->
       <div id="lc-setup-state">
 
-        <!-- ★ EASY WAY: Bookmarklet -->
-        <div class="bm-section">
-          <div class="bm-easy-label">⚡ Easy Way — One Click</div>
-          <div class="bm-title">Use the LeetCode Login Bookmarklet</div>
-          <div class="bm-sub">Drag the button below to your bookmarks bar. Then go to LeetCode (while logged in) and click it — you'll be connected instantly!</div>
-          <div class="bm-drag-area">
-            <a id="bm-link" class="bm-link" href="#" onclick="return false;" title="Drag me to your bookmarks bar!">🔑 Connect to DSA Prep</a>
-            <div class="bm-drag-hint">👆 Drag this button to your bookmarks bar (or right-click → Bookmark)</div>
-          </div>
-          <div class="bm-steps">
-            <div class="bm-step-row"><div class="bm-step-n">1</div><span>Drag the button above to your <b>bookmarks bar</b></span></div>
-            <div class="bm-step-row"><div class="bm-step-n">2</div><span>Go to <a href="https://leetcode.com" target="_blank" style="color:var(--accent)">leetcode.com</a> and make sure you're <b>logged in</b></span></div>
-            <div class="bm-step-row"><div class="bm-step-n">3</div><span>Click the <b>"Connect to DSA Prep"</b> bookmark — done! ✅</span></div>
-          </div>
-        </div>
+        <!-- Username + Password login -->
+        <div class="lc-input-label">LeetCode Username or Email</div>
+        <input class="lc-input" id="lc-username-input" type="text" placeholder="your_username or email@example.com" autocomplete="username">
 
-        <!-- Divider -->
-        <div class="bm-divider">
-          <div class="bm-divider-line"></div>
-          <div class="bm-divider-txt">OR MANUAL WAY</div>
-          <div class="bm-divider-line"></div>
-        </div>
-
-        <!-- Manual Way: DevTools cookies -->
-        <div class="lc-step">
-          <div class="lc-step-num">1</div>
-          <div class="lc-step-body">
-            <div class="lc-step-title">Open LeetCode in Chrome/Edge</div>
-            <div class="lc-step-desc">Log in at <a href="https://leetcode.com" target="_blank" style="color:var(--accent)">leetcode.com</a> → open DevTools (F12 or ⌘⌥I)</div>
-          </div>
-        </div>
-        <div class="lc-step">
-          <div class="lc-step-num">2</div>
-          <div class="lc-step-body">
-            <div class="lc-step-title">Application → Cookies → leetcode.com</div>
-            <div class="lc-step-desc">In DevTools: <b>Application</b> tab → <b>Cookies</b> → <code>https://leetcode.com</code></div>
-          </div>
-        </div>
-        <div class="lc-step">
-          <div class="lc-step-num">3</div>
-          <div class="lc-step-body">
-            <div class="lc-step-title">Copy both cookie values below</div>
-            <div class="lc-step-desc">Find <code>LEETCODE_SESSION</code> and <code>csrftoken</code> — copy their <b>Value</b> fields</div>
-          </div>
-        </div>
-
-        <div class="lc-input-label">LEETCODE_SESSION</div>
-        <input class="lc-input" id="lc-session-input" type="password" placeholder="Paste LEETCODE_SESSION value...">
-        <div class="lc-input-label">csrftoken</div>
-        <input class="lc-input" id="lc-csrf-input" placeholder="Paste csrftoken value...">
+        <div class="lc-input-label">Password</div>
+        <input class="lc-input" id="lc-password-input" type="password" placeholder="Your LeetCode password" autocomplete="current-password">
 
         <div id="lc-error-msg" style="color:var(--red);font-size:12px;margin-top:8px;display:none"></div>
 
-        <button class="lc-connect-action" id="lc-connect-btn" onclick="connectLC()">🔗 Connect & Verify</button>
+        <button class="lc-connect-action" id="lc-connect-btn" onclick="connectLC()">🔑 Login & Connect</button>
 
         <div class="lc-privacy">
-          🔒 Your cookies stay in your browser only (localStorage). They're never sent to any server except LeetCode's own API via our proxy.
+          🔒 Your credentials are sent directly to LeetCode via our secure proxy — never stored. Only the session token is saved locally in your browser.
         </div>
       </div>
     </div>
@@ -940,36 +896,44 @@ function updateLCStatusBtn() {
   }
 }
 async function connectLC() {
-  const session = document.getElementById('lc-session-input').value.trim();
-  const csrf    = document.getElementById('lc-csrf-input').value.trim();
-  const errEl   = document.getElementById('lc-error-msg');
-  const btn     = document.getElementById('lc-connect-btn');
+  const username = document.getElementById('lc-username-input').value.trim();
+  const password = document.getElementById('lc-password-input').value;
+  const errEl    = document.getElementById('lc-error-msg');
+  const btn      = document.getElementById('lc-connect-btn');
 
-  if (!session || !csrf) { showLCError('Please paste both cookie values.'); return; }
+  if (!username || !password) { showLCError('Please enter your username and password.'); return; }
 
   btn.disabled = true;
-  btn.textContent = '⏳ Verifying...';
+  btn.textContent = '⏳ Logging in...';
   errEl.style.display = 'none';
 
-  // Temporarily set creds for the verify call
-  lcSession = session; lcCsrf = csrf;
-
   try {
-    const data = await lcGql(`query { userStatus { username isSignedIn } }`, {});
-    const status = data?.data?.userStatus;
-    if (!status?.isSignedIn) throw new Error('Not signed in. Check your cookies.');
-    lcUsername = status.username;
-    // Save to localStorage
-    localStorage.setItem('lc_session', session);
-    localStorage.setItem('lc_csrf', csrf);
+    const resp = await fetch(PROXY_URL + '/login', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ username, password }),
+    });
+    const data = await resp.json();
+
+    if (!data.ok) throw new Error(data.error || 'Login failed');
+
+    // Save session to state + localStorage
+    lcSession  = data.session;
+    lcCsrf     = data.csrfToken;
+    lcUsername = data.username;
+    localStorage.setItem('lc_session',  lcSession);
+    localStorage.setItem('lc_csrf',     lcCsrf);
     localStorage.setItem('lc_username', lcUsername);
+
+    // Clear password from DOM for security
+    document.getElementById('lc-password-input').value = '';
+
     updateLCModalState();
     showToast('✅ Connected as @' + lcUsername);
   } catch (e) {
-    lcSession = ''; lcCsrf = '';
-    showLCError('Failed: ' + e.message);
+    showLCError('❌ ' + e.message);
     btn.disabled = false;
-    btn.textContent = '🔗 Connect & Verify';
+    btn.textContent = '🔑 Login & Connect';
   }
 }
 function disconnectLC() {
