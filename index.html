@@ -1,0 +1,1655 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
+<title>DSA Prep App – Interactive Demo</title>
+<style>
+:root {
+  --bg: #0D1117; --card: #161B22; --card2: #1C2128; --code-bg: #0D1117;
+  --text: #E6EDF3; --text2: #8B949E; --muted: #484F58;
+  --accent: #58A6FF; --green: #3FB950; --orange: #F0883E;
+  --red: #F85149; --purple: #BC8CFF; --yellow: #E3B341;
+  --border: #30363D; --border2: #21262D;
+}
+* { box-sizing: border-box; margin: 0; padding: 0; }
+body { background: var(--bg); color: var(--text); font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; overflow-x: hidden; }
+.phone-frame { max-width: 390px; min-height: 100vh; margin: 0 auto; position: relative; background: var(--bg); box-shadow: 0 0 60px #00000088; }
+@media (min-width: 500px) { .phone-frame { margin: 20px auto; min-height: calc(100vh - 40px); border-radius: 40px; overflow: hidden; border: 1px solid var(--border); } }
+
+/* SCREENS */
+.screen { display: none; flex-direction: column; height: 100%; min-height: 100vh; }
+.screen.active { display: flex; }
+
+/* BOTTOM TAB */
+.tab-bar { display: flex; background: var(--card); border-top: 1px solid var(--border); padding: 8px 0 20px; flex-shrink: 0; }
+.tab-item { flex: 1; display: flex; flex-direction: column; align-items: center; gap: 3px; cursor: pointer; padding: 4px; transition: opacity .15s; position: relative; }
+.tab-icon { font-size: 20px; opacity: .45; transition: opacity .15s; }
+.tab-item.active .tab-icon { opacity: 1; }
+.tab-label { font-size: 10px; color: var(--muted); font-weight: 600; }
+.tab-item.active .tab-label { color: var(--accent); }
+.tab-bar .tab-item.active::before { content:''; position: absolute; top: 0; width: 24px; height: 2px; background: var(--accent); border-radius: 1px; }
+
+/* SCROLL CONTENT */
+.scroll { flex: 1; overflow-y: auto; -webkit-overflow-scrolling: touch; }
+.scroll::-webkit-scrollbar { width: 4px; }
+.scroll::-webkit-scrollbar-thumb { background: var(--border); border-radius: 2px; }
+
+/* HEADER */
+.header { padding: 54px 20px 14px; display: flex; justify-content: space-between; align-items: flex-end; }
+.h-title { font-size: 28px; font-weight: 800; }
+.h-sub { font-size: 13px; color: var(--muted); margin-top: 3px; }
+
+/* STATS ROW */
+.stats-grid { display: grid; grid-template-columns: repeat(4,1fr); gap: 8px; margin: 0 16px 16px; }
+.stat-box { background: var(--card); border: 1px solid var(--border); border-radius: 12px; padding: 12px 8px; text-align: center; }
+.stat-val { font-size: 22px; font-weight: 800; }
+.stat-label { font-size: 10px; color: var(--text2); margin-top: 2px; }
+
+/* TOPIC CARDS */
+.topic-card { margin: 0 16px 10px; background: var(--card); border: 1px solid var(--border); border-radius: 16px; padding: 16px; cursor: pointer; transition: border-color .2s, transform .1s; }
+.topic-card:active { transform: scale(.98); }
+.topic-card:hover { border-color: var(--accent) 55; }
+.tc-row { display: flex; align-items: center; gap: 12px; margin-bottom: 12px; }
+.tc-icon { width: 42px; height: 42px; border-radius: 12px; display: flex; align-items: center; justify-content: center; font-size: 20px; flex-shrink: 0; }
+.tc-name { font-size: 16px; font-weight: 700; }
+.tc-desc { font-size: 12px; color: var(--text2); margin-top: 2px; }
+.tc-stats { display: flex; gap: 10px; font-size: 11px; }
+.tc-done { color: var(--green); font-weight: 700; }
+.tc-rev { color: var(--orange); font-weight: 700; }
+.tc-total { color: var(--muted); }
+.prog-bar { height: 5px; background: var(--card2); border-radius: 3px; margin-top: 8px; overflow: hidden; display: flex; gap: 0; }
+.prog-done { background: var(--green); border-radius: 3px; transition: width .3s; }
+.prog-rev { background: var(--orange); border-radius: 3px; }
+
+/* BADGE */
+.badge { padding: 3px 8px; border-radius: 6px; font-size: 11px; font-weight: 700; border: 1px solid; display: inline-block; }
+.badge-easy { color: var(--green); border-color: #3fb95044; }
+.badge-medium { color: var(--orange); border-color: #f0883e44; }
+.badge-hard { color: var(--red); border-color: #f8514944; }
+
+/* TOPIC SCREEN */
+.back-btn { font-size: 30px; color: var(--accent); cursor: pointer; line-height: 1; }
+.filter-tabs { display: flex; padding: 0 16px 12px; gap: 6px; flex-wrap: wrap; }
+.filter-tab { padding: 5px 14px; border-radius: 20px; border: 1px solid var(--border); font-size: 12px; font-weight: 600; color: var(--muted); cursor: pointer; background: var(--card2); transition: all .15s; }
+.filter-tab.active { border-color: var(--accent); color: var(--accent); background: #58a6ff22; }
+.prob-item { margin: 0 16px 8px; background: var(--card); border: 1px solid var(--border); border-radius: 14px; padding: 13px; cursor: pointer; transition: border-color .15s; }
+.prob-item:hover { border-color: #58a6ff44; }
+.prob-row { display: flex; gap: 10px; align-items: flex-start; }
+.status-dot { width: 9px; height: 9px; border-radius: 50%; margin-top: 5px; flex-shrink: 0; }
+.prob-meta { flex: 1; }
+.prob-num { font-size: 11px; color: var(--muted); margin-bottom: 2px; }
+.prob-title { font-size: 14px; font-weight: 700; color: var(--text); }
+.prob-one { font-size: 12px; color: var(--text2); margin-top: 3px; line-height: 1.4; }
+.prob-tags { display: flex; gap: 6px; margin-top: 6px; flex-wrap: wrap; }
+.pattern-tag { font-size: 10px; background: var(--card2); border: 1px solid var(--border); padding: 2px 8px; border-radius: 10px; color: var(--muted); }
+
+/* PROBLEM SCREEN */
+.prob-header { padding: 54px 16px 10px; display: flex; justify-content: space-between; align-items: center; }
+.lc-btn { padding: 5px 12px; background: var(--card); border: 1px solid var(--border); border-radius: 10px; font-size: 13px; color: var(--accent); cursor: pointer; text-decoration: none; font-weight: 600; }
+.prob-title-section { padding: 0 16px 10px; }
+.prob-main-title { font-size: 20px; font-weight: 800; line-height: 1.3; margin-bottom: 8px; }
+.meta-row { display: flex; gap: 8px; flex-wrap: wrap; align-items: center; }
+.pattern-badge { font-size: 11px; color: var(--muted); background: var(--card); border: 1px solid var(--border); padding: 3px 8px; border-radius: 6px; }
+.complexity-txt { font-size: 11px; color: var(--muted); }
+.status-row { padding: 0 16px 8px; display: flex; align-items: center; justify-content: space-between; }
+.status-badge { padding: 5px 12px; border-radius: 20px; font-size: 12px; font-weight: 700; cursor: pointer; border: 1px solid; }
+.status-btns { display: flex; gap: 4px; }
+.status-btn { width: 32px; height: 32px; border-radius: 50%; background: var(--card); border: 1px solid var(--border); display: flex; align-items: center; justify-content: center; cursor: pointer; font-size: 16px; transition: all .15s; }
+.status-btn.active { border-color: var(--accent); background: #58a6ff22; }
+.rev-row { padding: 0 16px 10px; display: flex; gap: 5px; flex-wrap: wrap; align-items: center; }
+.rev-label { font-size: 11px; color: var(--muted); font-weight: 600; }
+.rev-btn { padding: 4px 10px; border-radius: 8px; border: 1px solid var(--border); background: var(--card); font-size: 11px; font-weight: 600; cursor: pointer; }
+.tab-bar-inner { display: flex; border-bottom: 1px solid var(--border); overflow-x: auto; padding: 0 16px; flex-shrink: 0; }
+.tab-bar-inner::-webkit-scrollbar { display: none; }
+.inner-tab { padding: 10px 14px; font-size: 13px; color: var(--muted); font-weight: 600; cursor: pointer; border-bottom: 2px solid transparent; white-space: nowrap; }
+.inner-tab.active { color: var(--accent); border-bottom-color: var(--accent); }
+
+/* NOTES */
+.notes-section { padding: 14px 16px; }
+.note-card { background: var(--card); border: 1px solid var(--border); border-radius: 14px; padding: 14px; margin-bottom: 10px; }
+.note-card.insight { border-color: #e3b34144; background: #1a1500; }
+.note-label { font-size: 12px; color: var(--text2); font-weight: 700; margin-bottom: 8px; }
+.note-body { font-size: 14px; color: var(--text); line-height: 1.6; }
+.note-accent { font-size: 15px; color: var(--accent); font-weight: 600; line-height: 1.5; }
+.note-yellow { color: var(--yellow); }
+.complexity-row { display: flex; gap: 10px; }
+.cx-chip { flex: 1; background: var(--card2); border: 1px solid var(--border); border-radius: 10px; padding: 10px 12px; }
+.cx-label { font-size: 10px; color: var(--muted); font-weight: 600; margin-bottom: 3px; }
+.cx-val { font-size: 13px; color: var(--purple); font-weight: 700; }
+
+/* CODE */
+.code-wrapper { margin: 14px 16px 0; }
+.code-header { background: #1a2030; border: 1px solid var(--border); border-bottom: 0; border-radius: 12px 12px 0 0; padding: 10px 14px; display: flex; justify-content: space-between; align-items: center; }
+.code-lang { color: var(--accent); font-weight: 700; font-size: 13px; }
+.copy-btn { padding: 4px 10px; background: var(--card2); border-radius: 8px; font-size: 11px; color: var(--text2); cursor: pointer; font-weight: 600; border: none; }
+pre { background: var(--code-bg); border: 1px solid var(--border); border-top: 0; border-radius: 0 0 12px 12px; padding: 14px; font-family: 'Courier New', monospace; font-size: 12.5px; color: #e6edf3; line-height: 1.6; overflow-x: auto; margin: 0; white-space: pre; }
+
+/* MY SOLUTION */
+.my-sol-banner { margin: 14px 16px 12px; background: #58a6ff15; border: 1px solid #58a6ff33; border-radius: 14px; padding: 12px 14px; }
+.my-sol-title { font-size: 14px; font-weight: 700; color: var(--accent); margin-bottom: 4px; }
+.my-sol-text { font-size: 12px; color: var(--text2); line-height: 1.5; }
+.lang-tabs { display: flex; gap: 8px; margin: 0 16px 12px; }
+.lang-tab { flex: 1; padding: 7px; border: 1px solid var(--border); border-radius: 10px; background: var(--card2); text-align: center; font-size: 13px; font-weight: 700; color: var(--muted); cursor: pointer; transition: all .15s; position: relative; }
+.lang-tab.active { border-color: var(--accent); background: #58a6ff22; color: var(--accent); }
+.lang-dot { width: 6px; height: 6px; border-radius: 50%; background: var(--green); display: inline-block; margin-left: 4px; vertical-align: middle; }
+.empty-code { background: var(--code-bg); border: 1px solid var(--border); border-top: 0; border-radius: 0 0 12px 12px; padding: 30px; text-align: center; cursor: pointer; }
+.empty-icon { font-size: 28px; margin-bottom: 6px; }
+.empty-title { font-size: 14px; font-weight: 700; color: var(--text2); margin-bottom: 4px; }
+.empty-text { font-size: 12px; color: var(--muted); }
+
+/* MY NOTES */
+.note-input-card { margin: 14px 16px 12px; background: var(--card); border: 1px solid var(--border); border-radius: 14px; padding: 14px; }
+.note-input-label { font-size: 12px; font-weight: 700; color: var(--text2); margin-bottom: 8px; }
+.note-textarea { width: 100%; background: var(--card2); border: 1px solid var(--border); border-radius: 10px; padding: 10px; color: var(--text); font-size: 13px; min-height: 70px; resize: none; font-family: inherit; line-height: 1.5; }
+.quick-chips { display: flex; gap: 6px; overflow-x: auto; padding-bottom: 4px; margin: 8px 0; }
+.quick-chips::-webkit-scrollbar { display: none; }
+.qchip { padding: 5px 10px; background: var(--card2); border: 1px solid var(--border); border-radius: 20px; font-size: 11px; color: var(--text2); cursor: pointer; white-space: nowrap; }
+.qchip:hover { border-color: var(--accent); color: var(--accent); }
+.add-btn { width: 100%; background: var(--accent); border-radius: 10px; padding: 9px; text-align: center; font-weight: 700; font-size: 14px; color: #fff; cursor: pointer; border: none; margin-top: 8px; }
+.note-history { margin: 0 16px; }
+.nh-label { font-size: 11px; color: var(--muted); font-weight: 600; margin-bottom: 8px; }
+.note-log-item { background: var(--card); border: 1px solid var(--border); border-radius: 12px; padding: 12px; margin-bottom: 8px; }
+.nli-date { font-size: 10px; color: var(--muted); margin-bottom: 5px; }
+.nli-text { font-size: 13px; color: var(--text); line-height: 1.5; }
+
+/* REVISE SCREEN */
+.streak-badge { background: var(--card); border: 1px solid #f0883e44; border-radius: 14px; padding: 10px 14px; text-align: center; }
+.streak-fire { font-size: 22px; }
+.streak-num { font-size: 22px; font-weight: 800; color: var(--orange); }
+.streak-lbl { font-size: 10px; color: var(--muted); }
+.queue-card { margin: 0 16px 16px; background: var(--card); border: 1px solid var(--border); border-radius: 16px; padding: 16px; }
+.queue-row { display: flex; justify-content: space-between; }
+.q-stat { flex: 1; text-align: center; }
+.q-val { font-size: 24px; font-weight: 800; color: var(--accent); }
+.q-label { font-size: 11px; color: var(--muted); margin-top: 2px; }
+.q-divider { width: 1px; background: var(--border); }
+.all-done-card { margin: 0 16px; background: var(--card); border: 1px solid var(--border); border-radius: 16px; padding: 24px; text-align: center; }
+.rev-card { margin: 0 16px 10px; background: var(--card); border: 1px solid var(--border); border-radius: 16px; overflow: hidden; }
+.rev-card-header { display: flex; gap: 10px; align-items: center; padding: 14px; cursor: pointer; }
+.rev-card-meta { flex: 1; }
+.rev-card-title { font-size: 14px; font-weight: 700; }
+.rev-card-sub { display: flex; gap: 8px; font-size: 11px; color: var(--muted); margin-top: 3px; }
+.rev-card-body { border-top: 1px solid var(--border); padding: 12px 14px; }
+.rev-oneliner { font-size: 13px; color: var(--accent); font-weight: 600; margin-bottom: 6px; line-height: 1.4; }
+.rev-insight { font-size: 12px; color: var(--yellow); line-height: 1.5; margin-bottom: 12px; }
+.open-prob-btn { display: block; background: #58a6ff22; border: 1px solid #58a6ff44; border-radius: 10px; padding: 9px; text-align: center; font-size: 13px; font-weight: 700; color: var(--accent); cursor: pointer; text-decoration: none; margin-bottom: 12px; }
+.fb-label { font-size: 11px; color: var(--muted); font-weight: 600; margin-bottom: 6px; }
+.fb-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 6px; }
+.fb-btn { padding: 10px 8px; border-radius: 10px; border: 1px solid; text-align: center; font-size: 12px; font-weight: 700; cursor: pointer; }
+.section-label { font-size: 12px; font-weight: 700; color: var(--muted); margin: 8px 16px; }
+
+/* STATS */
+.top-row { display: flex; gap: 12px; padding: 0 16px; margin-bottom: 16px; }
+.stats-card2 { flex: 1; background: var(--card); border: 1px solid var(--border); border-radius: 16px; padding: 14px; }
+.streak-card2 { flex: 1; background: var(--card); border: 1px solid #f0883e33; border-radius: 16px; padding: 14px; text-align: center; }
+.stats-mini-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+.mini-stat { text-align: center; }
+.mini-val { font-size: 18px; font-weight: 800; }
+.mini-lbl { font-size: 10px; color: var(--muted); }
+.section-box { margin: 0 16px 16px; background: var(--card); border: 1px solid var(--border); border-radius: 16px; padding: 16px; }
+.s-title { font-size: 16px; font-weight: 800; margin-bottom: 4px; }
+.s-sub { font-size: 11px; color: var(--muted); margin-bottom: 12px; }
+.heatmap { overflow-x: auto; }
+.heatmap-grid { display: flex; gap: 3px; }
+.hm-week { display: flex; flex-direction: column; gap: 3px; }
+.hm-cell { width: 12px; height: 12px; border-radius: 2px; }
+.hm-legend { display: flex; align-items: center; gap: 4px; margin-top: 8px; }
+.hm-legend-lbl { font-size: 10px; color: var(--muted); }
+.hm-legend-cell { width: 10px; height: 10px; border-radius: 2px; }
+.diff-row { display: flex; gap: 10px; }
+.diff-card { flex: 1; background: var(--card2); border: 1px solid; border-radius: 12px; padding: 12px; text-align: center; }
+.diff-label { font-size: 12px; font-weight: 700; margin-bottom: 6px; }
+.diff-big { font-size: 22px; font-weight: 800; }
+.diff-small { font-size: 13px; color: var(--muted); }
+.diff-bar-bg { height: 5px; background: var(--card); border-radius: 3px; margin-top: 8px; }
+.diff-bar-fill { height: 5px; border-radius: 3px; transition: width .5s; }
+.topic-row { display: flex; align-items: center; gap: 10px; padding: 10px 0; border-bottom: 1px solid var(--border2); }
+.topic-row:last-child { border-bottom: 0; }
+.t-icon { font-size: 20px; width: 28px; }
+.t-info { flex: 1; }
+.t-name-row { display: flex; justify-content: space-between; align-items: center; margin-bottom: 5px; }
+.t-name { font-size: 13px; font-weight: 600; }
+.t-frac { font-size: 11px; color: var(--muted); }
+
+/* SIMULATE */
+.setup-section { margin: 0 16px 14px; background: var(--card); border: 1px solid var(--border); border-radius: 16px; padding: 16px; }
+.setup-label { font-size: 13px; font-weight: 700; color: var(--text2); margin-bottom: 10px; }
+.option-row { display: flex; gap: 8px; flex-wrap: wrap; }
+.opt-btn { padding: 7px 16px; border: 1px solid var(--border); border-radius: 10px; font-size: 13px; font-weight: 600; color: var(--muted); cursor: pointer; background: var(--card2); transition: all .15s; }
+.opt-btn.active { border-color: var(--accent); color: var(--accent); background: #58a6ff22; }
+.topic-grid { display: flex; flex-wrap: wrap; gap: 8px; }
+.topic-chip-btn { display: flex; align-items: center; gap: 5px; padding: 6px 12px; border: 1px solid var(--border); border-radius: 20px; font-size: 12px; font-weight: 600; color: var(--muted); cursor: pointer; background: var(--card2); transition: all .15s; }
+.topic-chip-btn.active { border-color: var(--accent); color: var(--accent); background: #58a6ff22; }
+.start-btn { margin: 0 16px 16px; background: var(--accent); border-radius: 16px; padding: 15px; text-align: center; font-weight: 800; font-size: 17px; color: #fff; cursor: pointer; }
+
+/* SEARCH */
+.search-bar { margin: 8px 16px 12px; display: flex; align-items: center; gap: 10px; background: var(--card); border: 1px solid var(--border); border-radius: 12px; padding: 10px 14px; }
+.search-input { flex: 1; background: none; border: none; outline: none; color: var(--text); font-size: 14px; }
+.search-input::placeholder { color: var(--muted); }
+.search-result { margin: 0 16px 8px; background: var(--card); border: 1px solid var(--border); border-radius: 14px; padding: 12px; cursor: pointer; transition: border-color .15s; }
+.search-result:hover { border-color: #58a6ff44; }
+
+/* SIMULATE SESSION */
+.session-header { display: flex; justify-content: space-between; align-items: center; padding: 52px 16px 12px; }
+.end-btn { font-size: 14px; color: var(--red); font-weight: 700; cursor: pointer; }
+.timer-badge { background: var(--card); border: 1px solid var(--border); border-radius: 12px; padding: 5px 14px; }
+.timer-text { font-size: 18px; font-weight: 800; color: var(--accent); font-family: monospace; }
+.timer-warn .timer-text { color: var(--red); }
+.prog-dots { display: flex; gap: 5px; padding: 0 16px 14px; }
+.p-dot { flex: 1; height: 4px; border-radius: 2px; background: var(--card2); }
+.p-dot.done { background: var(--green); }
+.p-dot.current { background: var(--accent); }
+.prob-card { margin: 0 16px 12px; background: var(--card); border: 1px solid var(--border); border-radius: 16px; padding: 16px; }
+.reveal-btn { margin: 0 16px 12px; background: var(--card); border: 2px solid #58a6ff44; border-radius: 14px; padding: 14px; text-align: center; font-size: 15px; font-weight: 700; color: var(--accent); cursor: pointer; }
+.sol-card { margin: 0 16px 12px; }
+.sol-section { background: var(--card); border: 1px solid var(--border); border-radius: 12px; padding: 13px; margin-bottom: 8px; }
+.sol-section.insight { border-color: #e3b34144; background: #1a1500; }
+.sol-section.mysol { border-color: #bc8cff44; background: #bc8cff11; }
+.sol-sec-label { font-size: 11px; font-weight: 700; color: var(--text2); margin-bottom: 5px; }
+.fb-section { margin: 0 16px 16px; }
+.fb-title { font-size: 13px; font-weight: 700; color: var(--text2); margin-bottom: 8px; }
+.fb-grid2 { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+.fb-card { border-radius: 14px; border: 1px solid; padding: 14px 10px; text-align: center; cursor: pointer; font-size: 13px; font-weight: 700; line-height: 1.5; }
+
+/* RESULTS */
+.score-card { margin: 16px; background: var(--card); border: 1px solid var(--border); border-radius: 20px; padding: 28px; text-align: center; }
+.score-emoji { font-size: 52px; margin-bottom: 8px; }
+.score-val { font-size: 52px; font-weight: 800; color: var(--accent); }
+.score-label { font-size: 18px; font-weight: 700; margin-top: 4px; }
+.score-detail { font-size: 13px; color: var(--muted); margin-top: 6px; }
+.results-section { padding: 0 16px; }
+.results-title { font-size: 15px; font-weight: 700; margin-bottom: 10px; }
+.result-item { display: flex; justify-content: space-between; align-items: center; background: var(--card); border: 1px solid var(--border); border-radius: 12px; padding: 12px 14px; margin-bottom: 8px; cursor: pointer; }
+.ri-left { display: flex; gap: 10px; align-items: center; }
+.ri-num { font-size: 13px; color: var(--muted); font-weight: 700; width: 22px; }
+.ri-title { font-size: 13px; font-weight: 600; margin-bottom: 2px; }
+.ri-topic { font-size: 10px; color: var(--muted); }
+.ri-q { padding: 4px 10px; border-radius: 8px; border: 1px solid; font-size: 11px; font-weight: 700; }
+
+/* DEMO BANNER */
+.demo-banner { background: linear-gradient(135deg, #161B22, #1C2128); border-bottom: 1px solid var(--border); padding: 10px 16px; display: flex; justify-content: space-between; align-items: center; }
+.demo-text { font-size: 11px; color: var(--muted); }
+.demo-badge { font-size: 10px; background: var(--accent); color: #fff; padding: 2px 8px; border-radius: 10px; font-weight: 700; }
+
+/* LC CONNECT BUTTON in header */
+.lc-connect-btn { padding: 5px 10px; border-radius: 10px; font-size: 12px; font-weight: 700; cursor: pointer; border: 1px solid; transition: all .15s; }
+
+/* LC FETCH BANNER inside My Solution tab */
+.lc-fetch-banner { border-radius: 14px; border: 1px solid; padding: 12px 14px; margin: 14px 16px 10px; display: flex; align-items: center; gap: 10px; justify-content: space-between; }
+.lc-fetch-banner.connected { background: #3fb95015; border-color: #3fb95044; }
+.lc-fetch-banner.disconnected { background: #58a6ff15; border-color: #58a6ff33; }
+.lc-fetch-left { flex: 1; }
+.lc-fetch-title { font-size: 13px; font-weight: 700; color: var(--text); margin-bottom: 3px; }
+.lc-fetch-sub { font-size: 11px; color: var(--muted); line-height: 1.4; }
+.lc-fetch-btn { padding: 8px 14px; background: var(--accent); border-radius: 10px; font-size: 12px; font-weight: 800; color: #fff; cursor: pointer; border: none; white-space: nowrap; min-width: 72px; text-align: center; transition: opacity .15s; }
+.lc-fetch-btn:hover { opacity: .85; }
+.lc-fetch-btn.loading { background: var(--muted); cursor: default; }
+
+/* FETCH RESULT STATS */
+.fetch-result-card { margin: 0 16px 10px; background: #3fb95012; border: 1px solid #3fb95033; border-radius: 12px; padding: 12px; }
+.fetch-result-title { font-size: 12px; font-weight: 700; color: var(--green); margin-bottom: 8px; }
+.fetch-result-row { display: flex; gap: 8px; }
+.fetch-result-stat { flex: 1; background: var(--card); border: 1px solid var(--border); border-radius: 8px; padding: 8px; text-align: center; }
+.fetch-result-val { font-size: 12px; font-weight: 800; color: var(--text); margin-bottom: 2px; }
+.fetch-result-lbl { font-size: 10px; color: var(--muted); }
+
+/* LC CONNECT MODAL */
+.lc-modal-overlay { display: none; position: fixed; inset: 0; background: #000000cc; z-index: 1000; justify-content: center; align-items: flex-end; }
+.lc-modal-overlay.open { display: flex; }
+.lc-modal { background: var(--card); border: 1px solid var(--border); border-radius: 24px 24px 0 0; padding: 20px 20px 40px; width: 100%; max-width: 390px; max-height: 90vh; overflow-y: auto; animation: slideUp .25s ease; }
+@keyframes slideUp { from { transform: translateY(100%); } to { transform: translateY(0); } }
+.lc-modal-handle { width: 36px; height: 4px; background: var(--border); border-radius: 2px; margin: 0 auto 16px; }
+.lc-modal-title { font-size: 18px; font-weight: 800; margin-bottom: 4px; }
+.lc-modal-sub { font-size: 13px; color: var(--text2); margin-bottom: 18px; line-height: 1.5; }
+.lc-step { display: flex; gap: 12px; margin-bottom: 14px; }
+.lc-step-num { width: 24px; height: 24px; border-radius: 50%; background: #58a6ff22; border: 1px solid #58a6ff44; display: flex; align-items: center; justify-content: center; font-size: 11px; font-weight: 800; color: var(--accent); flex-shrink: 0; margin-top: 1px; }
+.lc-step-body { flex: 1; }
+.lc-step-title { font-size: 13px; font-weight: 700; color: var(--text); margin-bottom: 2px; }
+.lc-step-desc { font-size: 12px; color: var(--text2); line-height: 1.6; }
+.lc-input-label { font-size: 11px; font-weight: 700; color: var(--muted); margin: 14px 0 5px; text-transform: uppercase; letter-spacing: .5px; }
+.lc-input { width: 100%; background: var(--card2); border: 1px solid var(--border); border-radius: 10px; padding: 10px 12px; color: var(--text); font-size: 12px; font-family: monospace; margin-bottom: 4px; }
+.lc-input:focus { outline: none; border-color: var(--accent); }
+.lc-connect-action { width: 100%; background: var(--accent); border: none; border-radius: 12px; padding: 13px; color: #fff; font-size: 15px; font-weight: 800; cursor: pointer; margin-top: 16px; transition: opacity .15s; }
+.lc-connect-action:hover { opacity: .9; }
+.lc-connect-action:disabled { background: var(--muted); cursor: default; }
+.lc-connected-box { background: #3fb95018; border: 1px solid #3fb95044; border-radius: 14px; padding: 14px; margin-bottom: 14px; display: flex; justify-content: space-between; align-items: center; }
+.lc-connected-user { font-size: 15px; font-weight: 800; color: var(--green); }
+.lc-disconnect-btn { font-size: 12px; color: var(--red); font-weight: 700; cursor: pointer; padding: 5px 10px; border: 1px solid #f8514944; border-radius: 8px; background: #f8514915; }
+.lc-privacy { background: var(--card2); border-radius: 12px; padding: 12px; margin-top: 14px; font-size: 11px; color: var(--muted); line-height: 1.9; }
+
+/* TOOLTIP */
+.feature-chip { display: inline-flex; align-items: center; gap: 5px; padding: 5px 10px; background: #3fb95022; border: 1px solid #3fb95044; border-radius: 20px; font-size: 11px; color: var(--green); font-weight: 600; margin: 2px; }
+
+/* ANIMATIONS */
+@keyframes fadeIn { from { opacity: 0; transform: translateY(6px); } to { opacity: 1; transform: translateY(0); } }
+.screen.active { animation: fadeIn .2s ease; }
+</style>
+</head>
+<body>
+
+<div class="phone-frame">
+  <!-- DEMO BANNER -->
+  <div class="demo-banner">
+    <span class="demo-text">🎯 Interactive Demo — All data is live</span>
+    <span class="demo-badge">PREVIEW</span>
+  </div>
+
+  <!-- ════════════════════ HOME SCREEN ════════════════════ -->
+  <div class="screen active" id="screen-home">
+    <div class="scroll">
+      <div class="header">
+        <div>
+          <div class="h-title">DSA Prep 🧠</div>
+          <div class="h-sub">Interview Ready</div>
+        </div>
+        <div style="display:flex;gap:8px;flex-direction:column;align-items:flex-end">
+          <div style="font-size:11px;color:var(--muted)">🔥 <b style="color:var(--orange)">3</b> day streak</div>
+          <div style="display:flex;gap:4px;flex-wrap:wrap;justify-content:flex-end">
+            <span class="feature-chip">💻 My Solutions</span>
+            <span class="feature-chip">📝 My Notes</span>
+          </div>
+        </div>
+      </div>
+      <div class="stats-grid" id="overall-stats"></div>
+      <div style="padding:0 16px 12px;font-size:12px;color:var(--muted);font-weight:700;">📚 TOPICS</div>
+      <div id="topics-list"></div>
+    </div>
+    <div class="tab-bar" id="tabbar-home"></div>
+  </div>
+
+  <!-- ════════════════════ TOPIC SCREEN ════════════════════ -->
+  <div class="screen" id="screen-topic">
+    <div style="padding:54px 16px 12px;display:flex;gap:12px;align-items:center;">
+      <span class="back-btn" onclick="goBack()">‹</span>
+      <div style="flex:1">
+        <div style="font-size:20px;font-weight:800;" id="topic-header-name">Topic</div>
+        <div style="font-size:12px;color:var(--muted);margin-top:2px;" id="topic-header-desc"></div>
+      </div>
+    </div>
+    <div style="padding:0 16px 12px;"><div class="prog-bar" id="topic-prog-bar"></div></div>
+    <div class="filter-tabs" id="filter-tabs">
+      <div class="filter-tab active" data-filter="all" onclick="setFilter('all',this)">All</div>
+      <div class="filter-tab" data-filter="pending" onclick="setFilter('pending',this)">Pending</div>
+      <div class="filter-tab" data-filter="revisit" onclick="setFilter('revisit',this)">Revisit</div>
+      <div class="filter-tab" data-filter="done" onclick="setFilter('done',this)">Done</div>
+    </div>
+    <div class="scroll" id="problems-list"></div>
+    <div class="tab-bar" id="tabbar-topic"></div>
+  </div>
+
+  <!-- ════════════════════ PROBLEM SCREEN ════════════════════ -->
+  <div class="screen" id="screen-problem">
+    <div class="prob-header">
+      <span class="back-btn" onclick="goBack()">‹</span>
+      <div style="display:flex;gap:6px;align-items:center">
+        <a class="lc-btn" id="lc-link" href="#" target="_blank" rel="noopener">LC #— ↗</a>
+        <div class="lc-connect-btn" id="lc-status-btn" onclick="openLCModal()"
+          style="color:var(--muted);border-color:var(--border);background:var(--card)">🔗 LC</div>
+      </div>
+    </div>
+    <div class="prob-title-section">
+      <div class="prob-main-title" id="prob-main-title">—</div>
+      <div class="meta-row">
+        <span class="badge" id="prob-diff"></span>
+        <span class="pattern-badge" id="prob-pattern"></span>
+        <span class="complexity-txt" id="prob-time"></span>
+      </div>
+    </div>
+    <div class="status-row">
+      <div id="status-badge-container"></div>
+      <div class="status-btns">
+        <div class="status-btn" id="sbtn-pending" onclick="setStatus('pending')" title="Pending">○</div>
+        <div class="status-btn" id="sbtn-revisit" onclick="setStatus('revisit')" title="Revisit">↻</div>
+        <div class="status-btn" id="sbtn-done" onclick="setStatus('done')" title="Done">✓</div>
+      </div>
+    </div>
+    <div class="rev-row">
+      <span class="rev-label">Revision:</span>
+      <span class="rev-btn" style="color:var(--red);border-color:#f8514944" onclick="revAlert('tomorrow')">😵 Forgot</span>
+      <span class="rev-btn" style="color:var(--orange);border-color:#f0883e44" onclick="revAlert('2 days')">😓 Hard</span>
+      <span class="rev-btn" style="color:var(--accent);border-color:#58a6ff44" onclick="revAlert('~6 days')">👍 Good</span>
+      <span class="rev-btn" style="color:var(--green);border-color:#3fb95044" onclick="revAlert('~2 weeks')">🚀 Easy</span>
+    </div>
+    <div class="tab-bar-inner" id="inner-tabs">
+      <div class="inner-tab active" onclick="setInnerTab('notes',this)">Notes</div>
+      <div class="inner-tab" onclick="setInnerTab('cpp',this)">C++</div>
+      <div class="inner-tab" onclick="setInnerTab('java',this)">Java</div>
+      <div class="inner-tab" onclick="setInnerTab('mysol',this)">💻 My Sol</div>
+      <div class="inner-tab" onclick="setInnerTab('mynotes',this)">📝 My Notes</div>
+    </div>
+    <div class="scroll">
+      <div id="tab-notes" class="notes-section"></div>
+      <div id="tab-cpp" style="display:none;padding-bottom:60px"></div>
+      <div id="tab-java" style="display:none;padding:14px 16px;color:var(--muted);font-size:14px;">Java solution available in the app.</div>
+      <div id="tab-mysol" style="display:none;padding-bottom:60px"></div>
+      <div id="tab-mynotes" style="display:none;padding-bottom:60px"></div>
+    </div>
+    <div class="tab-bar" id="tabbar-problem"></div>
+  </div>
+
+  <!-- ════════════════════ REVISE SCREEN ════════════════════ -->
+  <div class="screen" id="screen-revise">
+    <div class="scroll">
+      <div class="header">
+        <div>
+          <div class="h-title">Daily Revise</div>
+          <div class="h-sub">Spaced Repetition</div>
+        </div>
+        <div class="streak-badge">
+          <div class="streak-fire">🔥</div>
+          <div class="streak-num">3</div>
+          <div class="streak-lbl">day streak</div>
+        </div>
+      </div>
+      <div class="queue-card">
+        <div class="queue-row">
+          <div class="q-stat"><div class="q-val" style="color:var(--accent)">4</div><div class="q-label">Due Today</div></div>
+          <div class="q-divider"></div>
+          <div class="q-stat"><div class="q-val" style="color:var(--orange)">2</div><div class="q-label">To Revisit</div></div>
+          <div class="q-divider"></div>
+          <div class="q-stat"><div class="q-val" style="color:var(--purple)">7</div><div class="q-label">Best Streak</div></div>
+        </div>
+      </div>
+      <div class="section-label">📋 Review Queue (4)</div>
+
+      <!-- Due cards -->
+      <div id="revise-cards"></div>
+
+      <!-- How it works -->
+      <div style="margin:16px;background:var(--card);border:1px solid var(--border);border-radius:16px;padding:16px;">
+        <div style="font-size:13px;font-weight:700;color:var(--yellow);margin-bottom:8px;">💡 How Spaced Repetition Works</div>
+        <div style="font-size:12px;color:var(--text2);line-height:1.8;">
+          • Mark a problem <b>Done</b> → schedules for 1 day review<br>
+          • Rate <b>🚀 Easy</b> → pushes it ~2 weeks out<br>
+          • Rate <b>😵 Forgot</b> → comes back tomorrow<br>
+          • Problems marked <b>Revisit</b> always appear in queue
+        </div>
+      </div>
+    </div>
+    <div class="tab-bar" id="tabbar-revise"></div>
+  </div>
+
+  <!-- ════════════════════ STATS SCREEN ════════════════════ -->
+  <div class="screen" id="screen-stats">
+    <div class="scroll">
+      <div class="header" style="padding-bottom:16px;">
+        <div>
+          <div class="h-title">My Stats</div>
+          <div class="h-sub">Track your growth</div>
+        </div>
+        <div style="font-size:11px;color:var(--muted);background:var(--card);border:1px solid #f8514944;padding:5px 12px;border-radius:10px;color:var(--red);cursor:pointer">Reset</div>
+      </div>
+      <div class="top-row">
+        <div class="streak-card2">
+          <div style="font-size:28px">🔥</div>
+          <div style="font-size:28px;font-weight:800;color:var(--orange);line-height:1.1">3</div>
+          <div style="font-size:12px;color:var(--text2);margin-top:2px">Day Streak</div>
+          <div style="font-size:10px;color:var(--muted);margin-top:4px">Best: 7</div>
+        </div>
+        <div class="stats-card2">
+          <div class="stats-mini-grid">
+            <div class="mini-stat"><div class="mini-val">37</div><div class="mini-lbl">Total</div></div>
+            <div class="mini-stat"><div class="mini-val" style="color:var(--green)">12</div><div class="mini-lbl">Done</div></div>
+            <div class="mini-stat"><div class="mini-val" style="color:var(--orange)">5</div><div class="mini-lbl">Revisit</div></div>
+            <div class="mini-stat"><div class="mini-val" style="color:var(--purple)">8</div><div class="mini-lbl">My Sols</div></div>
+          </div>
+          <div style="margin-top:8px"><div class="prog-bar"><div class="prog-done" style="width:32%"></div><div class="prog-rev" style="width:13%"></div></div></div>
+        </div>
+      </div>
+      <div class="section-box">
+        <div class="s-title">📅 Activity Heatmap</div>
+        <div class="s-sub">Problems solved in the last 12 weeks</div>
+        <div id="heatmap-container"></div>
+      </div>
+      <div class="section-box">
+        <div class="s-title">🎯 Difficulty Breakdown</div>
+        <div class="diff-row" style="margin-top:12px">
+          <div class="diff-card" style="border-color:#3fb95044">
+            <div class="diff-label" style="color:var(--green)">Easy</div>
+            <div><span class="diff-big" style="color:var(--green)">9</span><span class="diff-small">/15</span></div>
+            <div class="diff-bar-bg"><div class="diff-bar-fill" style="width:60%;background:var(--green)"></div></div>
+          </div>
+          <div class="diff-card" style="border-color:#f0883e44">
+            <div class="diff-label" style="color:var(--orange)">Medium</div>
+            <div><span class="diff-big" style="color:var(--orange)">3</span><span class="diff-small">/18</span></div>
+            <div class="diff-bar-bg"><div class="diff-bar-fill" style="width:17%;background:var(--orange)"></div></div>
+          </div>
+          <div class="diff-card" style="border-color:#f8514944">
+            <div class="diff-label" style="color:var(--red)">Hard</div>
+            <div><span class="diff-big" style="color:var(--red)">0</span><span class="diff-small">/4</span></div>
+            <div class="diff-bar-bg"><div class="diff-bar-fill" style="width:0%;background:var(--red)"></div></div>
+          </div>
+        </div>
+      </div>
+      <div class="section-box">
+        <div class="s-title">📚 Topic Progress</div>
+        <div id="stats-topics" style="margin-top:12px"></div>
+      </div>
+    </div>
+    <div class="tab-bar" id="tabbar-stats"></div>
+  </div>
+
+  <!-- ════════════════════ SIMULATE SCREEN ════════════════════ -->
+  <div class="screen" id="screen-simulate">
+    <div id="sim-setup">
+      <div class="scroll">
+        <div class="header">
+          <div>
+            <div class="h-title">Simulate</div>
+            <div class="h-sub">Mock Interview Mode</div>
+          </div>
+          <div style="font-size:32px">🎯</div>
+        </div>
+        <div class="setup-section">
+          <div class="setup-label">⏱ Interview Duration</div>
+          <div class="option-row" id="dur-opts">
+            <div class="opt-btn" onclick="setDur(20,this)">20 min</div>
+            <div class="opt-btn active" onclick="setDur(30,this)">30 min</div>
+            <div class="opt-btn" onclick="setDur(45,this)">45 min</div>
+            <div class="opt-btn" onclick="setDur(60,this)">60 min</div>
+          </div>
+        </div>
+        <div class="setup-section">
+          <div class="setup-label">📝 Number of Questions</div>
+          <div class="option-row" id="q-count-opts">
+            <div class="opt-btn" onclick="setQCount(3,this)">3</div>
+            <div class="opt-btn active" onclick="setQCount(5,this)">5</div>
+            <div class="opt-btn" onclick="setQCount(7,this)">7</div>
+            <div class="opt-btn" onclick="setQCount(10,this)">10</div>
+          </div>
+        </div>
+        <div class="setup-section">
+          <div class="setup-label">🎯 Difficulty</div>
+          <div class="option-row" id="diff-opts">
+            <div class="opt-btn active" onclick="setDiff('All',this)">All</div>
+            <div class="opt-btn" style="color:var(--green)" onclick="setDiff('Easy',this)">Easy</div>
+            <div class="opt-btn" style="color:var(--orange)" onclick="setDiff('Medium',this)">Medium</div>
+            <div class="opt-btn" style="color:var(--red)" onclick="setDiff('Hard',this)">Hard</div>
+          </div>
+        </div>
+        <div class="setup-section">
+          <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px">
+            <div class="setup-label" style="margin:0">📚 Topics</div>
+            <span style="font-size:11px;color:var(--accent);cursor:pointer;font-weight:600" onclick="toggleAllTopics()">Select All</span>
+          </div>
+          <div class="topic-grid" id="topic-chips"></div>
+          <div style="font-size:11px;color:var(--muted);margin-top:8px" id="topic-hint">(All topics selected)</div>
+        </div>
+        <div class="start-btn" onclick="startSim()">🚀 Start Interview</div>
+        <div style="height:80px"></div>
+      </div>
+    </div>
+    <div id="sim-session" style="display:none;flex-direction:column;height:100%;min-height:100vh">
+      <div class="session-header">
+        <span class="end-btn" onclick="endSim()">✕ End</span>
+        <div class="timer-badge" id="timer-badge"><span class="timer-text" id="timer-display">30:00</span></div>
+        <span style="font-size:13px;color:var(--muted);font-weight:700" id="sim-progress">1/5</span>
+      </div>
+      <div class="prog-dots" id="sim-dots"></div>
+      <div class="scroll" id="sim-content"></div>
+    </div>
+    <div id="sim-results" style="display:none">
+      <div class="scroll">
+        <div class="header">
+          <div class="h-title">Session Done!</div>
+          <div class="start-btn" style="margin:0;padding:8px 16px;font-size:13px;width:auto;border-radius:10px" onclick="resetSim()">New Session</div>
+        </div>
+        <div class="score-card" id="score-card"></div>
+        <div class="results-section" id="results-list"></div>
+        <div style="height:100px"></div>
+      </div>
+    </div>
+    <div class="tab-bar" id="tabbar-simulate"></div>
+  </div>
+
+  <!-- ════════════════════ SEARCH SCREEN ════════════════════ -->
+  <div class="screen" id="screen-search">
+    <div class="scroll">
+      <div class="header" style="padding-bottom:10px">
+        <div class="h-title">Search</div>
+      </div>
+      <div class="search-bar">
+        <span style="color:var(--muted)">🔍</span>
+        <input class="search-input" id="search-input" placeholder="Search problems, LC#, tags..." oninput="doSearch(this.value)">
+      </div>
+      <div id="search-results"></div>
+    </div>
+    <div class="tab-bar" id="tabbar-search"></div>
+  </div>
+
+  <!-- ════════════════════ LC CONNECT MODAL ════════════════════ -->
+  <div class="lc-modal-overlay" id="lc-modal-overlay" onclick="closeLCModal(event)">
+    <div class="lc-modal" onclick="event.stopPropagation()">
+      <div class="lc-modal-handle"></div>
+      <div class="lc-modal-title">🔗 Connect LeetCode</div>
+      <div class="lc-modal-sub">Link your account to automatically pull your accepted submissions — no copy-pasting.</div>
+
+      <!-- Connected state -->
+      <div id="lc-connected-state" style="display:none">
+        <div class="lc-connected-box">
+          <div>
+            <div style="font-size:12px;color:var(--text2);margin-bottom:2px">Connected as</div>
+            <div class="lc-connected-user" id="lc-username-display">@username</div>
+          </div>
+          <div class="lc-disconnect-btn" onclick="disconnectLC()">Disconnect</div>
+        </div>
+        <button class="lc-connect-action" onclick="closeLCModal()">✓ Done</button>
+      </div>
+
+      <!-- Setup form -->
+      <div id="lc-setup-state">
+        <div class="lc-step">
+          <div class="lc-step-num">1</div>
+          <div class="lc-step-body">
+            <div class="lc-step-title">Open LeetCode in Chrome/Edge</div>
+            <div class="lc-step-desc">Log in at <a href="https://leetcode.com" target="_blank" style="color:var(--accent)">leetcode.com</a> → open DevTools (F12 or ⌘⌥I)</div>
+          </div>
+        </div>
+        <div class="lc-step">
+          <div class="lc-step-num">2</div>
+          <div class="lc-step-body">
+            <div class="lc-step-title">Application → Cookies → leetcode.com</div>
+            <div class="lc-step-desc">In DevTools: <b>Application</b> tab → <b>Cookies</b> → <code>https://leetcode.com</code></div>
+          </div>
+        </div>
+        <div class="lc-step">
+          <div class="lc-step-num">3</div>
+          <div class="lc-step-body">
+            <div class="lc-step-title">Copy both cookie values below</div>
+            <div class="lc-step-desc">Find <code>LEETCODE_SESSION</code> and <code>csrftoken</code> — copy their <b>Value</b> fields</div>
+          </div>
+        </div>
+
+        <div class="lc-input-label">LEETCODE_SESSION</div>
+        <input class="lc-input" id="lc-session-input" type="password" placeholder="Paste LEETCODE_SESSION value...">
+        <div class="lc-input-label">csrftoken</div>
+        <input class="lc-input" id="lc-csrf-input" placeholder="Paste csrftoken value...">
+
+        <div id="lc-error-msg" style="color:var(--red);font-size:12px;margin-top:8px;display:none"></div>
+
+        <button class="lc-connect-action" id="lc-connect-btn" onclick="connectLC()">🔗 Connect & Verify</button>
+
+        <div class="lc-privacy">
+          🔒 Your cookies stay in your browser only (localStorage). They're never sent to any server except leetcode.com.
+        </div>
+      </div>
+    </div>
+  </div>
+
+</div>
+
+<script>
+// ─────────────────────────────────────────────
+// DATA
+// ─────────────────────────────────────────────
+const TOPICS = [{"id":"two-pointers","name":"Two Pointers","icon":"👆","color":"#6C63FF","description":"Solve array/string problems using two indices moving inward or forward","problems":[{"id":"tp-001","title":"Move Zeroes","leetcode":283,"difficulty":"Easy","pattern":"Partition / Reorder","oneLiner":"Move all non-zeroes forward, push zeroes to back","intuition":"Use a write pointer. Scan with read pointer — if element is non-zero, write it at write pointer and advance. Fill remaining with zeroes.","keyInsight":"Write pointer tracks where the next non-zero should go. After loop, everything from writePtr to end becomes 0.","timeComplexity":"O(n)","spaceComplexity":"O(1)","tags":["array","two-pointers","in-place"],"cpp":"void moveZeroes(vector<int>& nums) {\n    int writePtr = 0;\n    for (int i = 0; i < nums.size(); i++) {\n        if (nums[i] != 0) {\n            nums[writePtr++] = nums[i];\n        }\n    }\n    // Fill rest with zeroes\n    while (writePtr < nums.size()) {\n        nums[writePtr++] = 0;\n    }\n}"},{"id":"tp-002","title":"Remove Element","leetcode":27,"difficulty":"Easy","pattern":"Partition / Reorder","oneLiner":"Keep all elements not equal to target, return new length","intuition":"Write pointer approach. Copy non-target elements in-place to the front.","keyInsight":"Same as moveZeroes but instead of zeroes, we remove the specific value. writePtr is also your answer (new length).","timeComplexity":"O(n)","spaceComplexity":"O(1)","tags":["array","two-pointers","in-place"],"cpp":"int removeElement(vector<int>& nums, int val) {\n    int writePtr = 0;\n    for (int i = 0; i < nums.size(); i++) {\n        if (nums[i] != val) {\n            nums[writePtr++] = nums[i];\n        }\n    }\n    return writePtr;\n}"},{"id":"tp-003","title":"Remove Duplicates from Sorted Array","leetcode":26,"difficulty":"Easy","pattern":"Partition / Reorder","oneLiner":"Keep only unique elements from sorted array in-place","intuition":"Since sorted, duplicates are adjacent. Write pointer moves only when a new unique value is found.","keyInsight":"Start writePtr at 1 (first element is always unique). Compare nums[i] with nums[writePtr-1]. If different, write.","timeComplexity":"O(n)","spaceComplexity":"O(1)","tags":["array","two-pointers","sorted"],"cpp":"int removeDuplicates(vector<int>& nums) {\n    int writePtr = 1;\n    for (int i = 1; i < nums.size(); i++) {\n        if (nums[i] != nums[writePtr - 1]) {\n            nums[writePtr++] = nums[i];\n        }\n    }\n    return writePtr;\n}"}]},{"id":"sliding-window","name":"Sliding Window","icon":"🪟","color":"#FF6B6B","description":"Fixed and variable size window problems for subarrays/substrings","problems":[{"id":"sw-001","title":"Maximum Average Subarray I","leetcode":643,"difficulty":"Easy","pattern":"Fixed Window","oneLiner":"Find max average of any k-length subarray","intuition":"Maintain a running sum of k elements. Slide by adding next element and removing first element of previous window.","keyInsight":"No need to divide by k every time. Track maxSum, divide only at end. Slide: sum += nums[i] - nums[i-k]","timeComplexity":"O(n)","spaceComplexity":"O(1)","tags":["array","sliding-window","fixed"],"cpp":"double findMaxAverage(vector<int>& nums, int k) {\n    double sum = 0;\n    for (int i = 0; i < k; i++) sum += nums[i];\n    double maxSum = sum;\n    for (int i = k; i < nums.size(); i++) {\n        sum += nums[i] - nums[i - k];\n        maxSum = max(maxSum, sum);\n    }\n    return maxSum / k;\n}"},{"id":"sw-002","title":"Permutation in String","leetcode":567,"difficulty":"Medium","pattern":"Fixed Window + Frequency","oneLiner":"Check if s2 contains any permutation of s1","intuition":"A permutation = same character frequencies. Slide a window of size s1.length() over s2. Compare frequency maps.","keyInsight":"Maintain a 'matches' counter. Increment window freq when entering, decrement when leaving. If freq[c]==need[c] → matches++, if it drops from equal → matches--. When matches==26 → found!","timeComplexity":"O(n)","spaceComplexity":"O(1) — only 26 chars","tags":["string","sliding-window","hashmap","fixed"],"cpp":"bool checkInclusion(string s1, string s2) {\n    if (s1.size() > s2.size()) return false;\n    vector<int> need(26, 0), window(26, 0);\n    for (char c : s1) need[c - 'a']++;\n    int k = s1.size(), matches = 0;\n    for (int i = 0; i < k; i++) window[s2[i] - 'a']++;\n    for (int i = 0; i < 26; i++) if (window[i] == need[i]) matches++;\n    if (matches == 26) return true;\n    for (int i = k; i < s2.size(); i++) {\n        // add s2[i]\n        int in = s2[i] - 'a';\n        window[in]++;\n        if (window[in] == need[in]) matches++;\n        else if (window[in] == need[in] + 1) matches--;\n        // remove s2[i-k]\n        int out = s2[i - k] - 'a';\n        window[out]--;\n        if (window[out] == need[out]) matches++;\n        else if (window[out] == need[out] - 1) matches--;\n        if (matches == 26) return true;\n    }\n    return false;\n}"},{"id":"sw-003","title":"Longest Substring Without Repeating Characters","leetcode":3,"difficulty":"Medium","pattern":"Variable Window","oneLiner":"Find longest substring with all unique characters","intuition":"Expand right pointer. When duplicate found, shrink from left until duplicate is removed. Track max length.","keyInsight":"Use HashMap<char, lastIndex>. When s[right] is seen and its lastIndex >= left, jump left directly to lastIndex+1 (optimization over slow shrink).","timeComplexity":"O(n)","spaceComplexity":"O(min(n, charset))","tags":["string","sliding-window","hashmap","variable"],"cpp":"int lengthOfLongestSubstring(string s) {\n    unordered_map<char, int> lastSeen;\n    int left = 0, maxLen = 0;\n    for (int right = 0; right < s.size(); right++) {\n        if (lastSeen.count(s[right]) && lastSeen[s[right]] >= left) {\n            left = lastSeen[s[right]] + 1;\n        }\n        lastSeen[s[right]] = right;\n        maxLen = max(maxLen, right - left + 1);\n    }\n    return maxLen;\n}"}]},{"id":"binary-search","name":"Binary Search","icon":"🔍","color":"#4ECDC4","description":"Search sorted spaces, binary search on answer, rotated arrays","problems":[{"id":"bs-001","title":"Binary Search","leetcode":704,"difficulty":"Easy","pattern":"Classic","oneLiner":"Find target in sorted array","intuition":"Divide search space in half each time. If mid < target → search right. If mid > target → search left.","keyInsight":"mid = left + (right - left) / 2 to avoid overflow. When to use left <= right vs left < right depends on the template you choose.","timeComplexity":"O(log n)","spaceComplexity":"O(1)","tags":["array","binary-search"],"cpp":"int search(vector<int>& nums, int target) {\n    int left = 0, right = nums.size() - 1;\n    while (left <= right) {\n        int mid = left + (right - left) / 2;\n        if (nums[mid] == target) return mid;\n        else if (nums[mid] < target) left = mid + 1;\n        else right = mid - 1;\n    }\n    return -1;\n}"},{"id":"bs-002","title":"Koko Eating Bananas","leetcode":875,"difficulty":"Medium","pattern":"Binary Search on Answer","oneLiner":"Find minimum eating speed to finish all bananas in h hours","intuition":"Binary search on the ANSWER (speed k). For a given speed, check if it's feasible. Min speed = 1, max speed = max(piles).","keyInsight":"hours(speed) = sum of ceil(pile/speed). This is a monotonic function — higher speed = fewer hours. Binary search on speed.","timeComplexity":"O(n log m) where m = max pile","spaceComplexity":"O(1)","tags":["array","binary-search","binary-search-on-answer"],"cpp":"int minEatingSpeed(vector<int>& piles, int h) {\n    int left = 1, right = *max_element(piles.begin(), piles.end());\n    while (left < right) {\n        int mid = left + (right - left) / 2;\n        long hours = 0;\n        for (int pile : piles) hours += (pile + mid - 1) / mid;\n        if (hours <= h) right = mid;\n        else left = mid + 1;\n    }\n    return left;\n}"},{"id":"bs-003","title":"Search in Rotated Sorted Array","leetcode":33,"difficulty":"Medium","pattern":"Rotated Array","oneLiner":"Find target in rotated sorted array","intuition":"Even though rotated, ONE half is always sorted. Determine which half is sorted, check if target is in that range.","keyInsight":"If nums[left] <= nums[mid] → left half sorted. Check if target in [left, mid). Otherwise search right. Vice versa for right half sorted.","timeComplexity":"O(log n)","spaceComplexity":"O(1)","tags":["array","binary-search","rotated"],"cpp":"int search(vector<int>& nums, int target) {\n    int left = 0, right = nums.size() - 1;\n    while (left <= right) {\n        int mid = left + (right - left) / 2;\n        if (nums[mid] == target) return mid;\n        if (nums[left] <= nums[mid]) {\n            if (nums[left] <= target && target < nums[mid])\n                right = mid - 1;\n            else\n                left = mid + 1;\n        } else {\n            if (nums[mid] < target && target <= nums[right])\n                left = mid + 1;\n            else\n                right = mid - 1;\n        }\n    }\n    return -1;\n}"}]},{"id":"linked-list","name":"Linked List","icon":"🔗","color":"#45B7D1","description":"Traversal, reversal, merging, fast-slow pointers","problems":[{"id":"ll-001","title":"Reverse Linked List","leetcode":206,"difficulty":"Easy","pattern":"Reversal","oneLiner":"Reverse a singly linked list","intuition":"Iterative: Keep prev, curr, next pointers. Point curr→prev, advance both.","keyInsight":"Three pointer dance: save next = curr.next, point curr.next = prev, advance prev = curr, curr = next. Return prev at end.","timeComplexity":"O(n)","spaceComplexity":"O(1) iterative","tags":["linked-list","reversal","two-pointers"],"cpp":"ListNode* reverseList(ListNode* head) {\n    ListNode* prev = nullptr;\n    ListNode* curr = head;\n    while (curr) {\n        ListNode* next = curr->next;\n        curr->next = prev;\n        prev = curr;\n        curr = next;\n    }\n    return prev;\n}"},{"id":"ll-002","title":"Linked List Cycle","leetcode":141,"difficulty":"Easy","pattern":"Fast-Slow Pointers","oneLiner":"Detect if a linked list has a cycle","intuition":"Floyd's algorithm: slow moves 1 step, fast moves 2 steps. If there's a cycle, they MUST meet.","keyInsight":"Fast pointer laps slow pointer if there's a cycle. Think of two runners on a circular track — faster one will eventually lap slower one.","timeComplexity":"O(n)","spaceComplexity":"O(1)","tags":["linked-list","fast-slow","cycle"],"cpp":"bool hasCycle(ListNode *head) {\n    ListNode *slow = head, *fast = head;\n    while (fast && fast->next) {\n        slow = slow->next;\n        fast = fast->next->next;\n        if (slow == fast) return true;\n    }\n    return false;\n}"},{"id":"ll-003","title":"Linked List Cycle II","leetcode":142,"difficulty":"Medium","pattern":"Fast-Slow Pointers","oneLiner":"Find the node where cycle begins","intuition":"Phase 1: Detect cycle (slow/fast meet). Phase 2: Reset one pointer to head, move both at speed 1.","keyInsight":"Math proof: distance from head to cycle start = distance from meeting point to cycle start. After phase 1, reset fast to head, move both at 1 → they meet at cycle entry.","timeComplexity":"O(n)","spaceComplexity":"O(1)","tags":["linked-list","fast-slow","cycle"],"cpp":"ListNode *detectCycle(ListNode *head) {\n    ListNode *slow = head, *fast = head;\n    while (fast && fast->next) {\n        slow = slow->next;\n        fast = fast->next->next;\n        if (slow == fast) break;\n    }\n    if (!fast || !fast->next) return nullptr;\n    fast = head;\n    while (slow != fast) {\n        slow = slow->next;\n        fast = fast->next;\n    }\n    return slow;\n}"}]},{"id":"stack","name":"Stack","icon":"📚","color":"#F7DC6F","description":"Monotonic stack, expression evaluation, parentheses, histogram problems","problems":[{"id":"st-001","title":"Valid Parentheses","leetcode":20,"difficulty":"Easy","pattern":"Basic Stack","oneLiner":"Check if parentheses, brackets, braces are valid and matching","intuition":"Push open brackets. On closing bracket, check if top of stack is matching open bracket. At end, stack should be empty.","keyInsight":"Use a map: closing → opening. If closing bracket, pop and check against map. If stack empty or mismatch → invalid.","timeComplexity":"O(n)","spaceComplexity":"O(n)","tags":["stack","string","parentheses"],"cpp":"bool isValid(string s) {\n    stack<char> st;\n    unordered_map<char,char> match = {{')',`(`},\n                                       {']','['},\n                                       {'}','{'}};\n    for (char c : s) {\n        if (c=='(' || c=='[' || c=='{') st.push(c);\n        else {\n            if (st.empty() || st.top() != match[c]) return false;\n            st.pop();\n        }\n    }\n    return st.empty();\n}"},{"id":"st-002","title":"Next Greater Element I","leetcode":496,"difficulty":"Easy","pattern":"Monotonic Stack","oneLiner":"Find next greater element for each element of nums1 in nums2","intuition":"Process nums2 with monotonic stack. When larger element found, pop all smaller elements — that larger element is their NGE.","keyInsight":"Stack stores elements waiting for their NGE. When nums2[i] > stack.top(), we found NGE for stack.top(). Store in hashmap.","timeComplexity":"O(m + n)","spaceComplexity":"O(n)","tags":["stack","monotonic","hashmap"],"cpp":"vector<int> nextGreaterElement(vector<int>& nums1, vector<int>& nums2) {\n    unordered_map<int, int> nge;\n    stack<int> st;\n    for (int x : nums2) {\n        while (!st.empty() && st.top() < x) {\n            nge[st.top()] = x;\n            st.pop();\n        }\n        st.push(x);\n    }\n    vector<int> result;\n    for (int x : nums1) result.push_back(nge.count(x) ? nge[x] : -1);\n    return result;\n}"},{"id":"st-003","title":"Largest Rectangle in Histogram","leetcode":84,"difficulty":"Hard","pattern":"Monotonic Stack","oneLiner":"Find largest rectangle area in histogram","intuition":"For each bar, the largest rectangle spans from its previous smaller to its next smaller element. Use monotonic stack.","keyInsight":"Maintain increasing stack. When heights[i] < stack.top(), pop and calculate: width = i - stack.top() - 1 (after pop). Add sentinel 0.","timeComplexity":"O(n)","spaceComplexity":"O(n)","tags":["stack","monotonic","histogram","hard"],"cpp":"int largestRectangleArea(vector<int>& heights) {\n    heights.push_back(0);\n    stack<int> st;\n    int maxArea = 0;\n    for (int i = 0; i < heights.size(); i++) {\n        while (!st.empty() && heights[st.top()] > heights[i]) {\n            int h = heights[st.top()];\n            st.pop();\n            int w = st.empty() ? i : i - st.top() - 1;\n            maxArea = max(maxArea, h * w);\n        }\n        st.push(i);\n    }\n    return maxArea;\n}"}]},{"id":"trees","name":"Trees","icon":"🌳","color":"#2ECC71","description":"BFS, DFS, BST, construction, LCA, path problems","problems":[{"id":"tr-001","title":"Level Order Traversal","leetcode":102,"difficulty":"Medium","pattern":"BFS","oneLiner":"Return level-by-level traversal of binary tree","intuition":"BFS with a queue. Key trick: record queue size at start of each level → process exactly that many nodes.","keyInsight":"int sz = q.size() at start of each level. Process exactly sz nodes. Children added will be for next level.","timeComplexity":"O(n)","spaceComplexity":"O(n)","tags":["tree","bfs","traversal"],"cpp":"vector<vector<int>> levelOrder(TreeNode* root) {\n    vector<vector<int>> result;\n    if (!root) return result;\n    queue<TreeNode*> q;\n    q.push(root);\n    while (!q.empty()) {\n        int sz = q.size();\n        vector<int> level;\n        for (int i = 0; i < sz; i++) {\n            auto node = q.front(); q.pop();\n            level.push_back(node->val);\n            if (node->left) q.push(node->left);\n            if (node->right) q.push(node->right);\n        }\n        result.push_back(level);\n    }\n    return result;\n}"},{"id":"tr-002","title":"Diameter of Binary Tree","leetcode":543,"difficulty":"Easy","pattern":"DFS Post-order","oneLiner":"Find longest path between any two nodes","intuition":"Diameter through any node = leftHeight + rightHeight. DFS post-order: update global max, return height.","keyInsight":"Diameter doesn't have to pass through root. At each node, diameter = left + right depth. Use a global variable.","timeComplexity":"O(n)","spaceComplexity":"O(h)","tags":["tree","dfs","post-order"],"cpp":"int maxDiam = 0;\nint dfs(TreeNode* node) {\n    if (!node) return 0;\n    int left = dfs(node->left);\n    int right = dfs(node->right);\n    maxDiam = max(maxDiam, left + right);\n    return max(left, right) + 1;\n}\nint diameterOfBinaryTree(TreeNode* root) {\n    maxDiam = 0;\n    dfs(root);\n    return maxDiam;\n}"},{"id":"tr-003","title":"Lowest Common Ancestor","leetcode":236,"difficulty":"Medium","pattern":"DFS","oneLiner":"Find lowest common ancestor of two nodes in binary tree","intuition":"If root is null or equals p or q, return root. Recurse left and right. If both return non-null → root is LCA.","keyInsight":"If left subtree found p and right found q (or vice versa), current node is LCA. If only one side found, propagate that up.","timeComplexity":"O(n)","spaceComplexity":"O(h)","tags":["tree","dfs","lca"],"cpp":"TreeNode* lowestCommonAncestor(TreeNode* root, TreeNode* p, TreeNode* q) {\n    if (!root || root == p || root == q) return root;\n    TreeNode* left = lowestCommonAncestor(root->left, p, q);\n    TreeNode* right = lowestCommonAncestor(root->right, p, q);\n    if (left && right) return root;\n    return left ? left : right;\n}"}]},{"id":"recursion-backtracking","name":"Recursion & Backtracking","icon":"🔄","color":"#E67E22","description":"Subsets, permutations, combinations, N-Queens, Word Search","problems":[{"id":"rb-001","title":"Subsets","leetcode":78,"difficulty":"Medium","pattern":"Backtracking","oneLiner":"Return all possible subsets of array","intuition":"At each index, make a binary choice: include or exclude. DFS through all combinations.","keyInsight":"Add current subset to result at every DFS call. For each element from start to end, add it, recurse, remove (backtrack).","timeComplexity":"O(2^n)","spaceComplexity":"O(n) recursion depth","tags":["backtracking","recursion","subsets"],"cpp":"vector<vector<int>> subsets(vector<int>& nums) {\n    vector<vector<int>> result;\n    vector<int> current;\n    function<void(int)> dfs = [&](int start) {\n        result.push_back(current);\n        for (int i = start; i < nums.size(); i++) {\n            current.push_back(nums[i]);\n            dfs(i + 1);\n            current.pop_back();\n        }\n    };\n    dfs(0);\n    return result;\n}"},{"id":"rb-002","title":"Permutations","leetcode":46,"difficulty":"Medium","pattern":"Backtracking","oneLiner":"Return all permutations of array","intuition":"At each position, choose any unused element. Mark as used, recurse, unmark (backtrack).","keyInsight":"Unlike subsets, permutations consider order. Use 'used' boolean array. Only add to result at leaf.","timeComplexity":"O(n! * n)","spaceComplexity":"O(n)","tags":["backtracking","recursion","permutations"],"cpp":"vector<vector<int>> permute(vector<int>& nums) {\n    vector<vector<int>> result;\n    vector<int> current;\n    vector<bool> used(nums.size(), false);\n    function<void()> dfs = [&]() {\n        if (current.size() == nums.size()) {\n            result.push_back(current);\n            return;\n        }\n        for (int i = 0; i < nums.size(); i++) {\n            if (!used[i]) {\n                used[i] = true;\n                current.push_back(nums[i]);\n                dfs();\n                current.pop_back();\n                used[i] = false;\n            }\n        }\n    };\n    dfs();\n    return result;\n}"},{"id":"rb-003","title":"Word Search","leetcode":79,"difficulty":"Medium","pattern":"Backtracking on Grid","oneLiner":"Check if word exists in 2D grid following adjacent cells","intuition":"DFS from every cell. Mark cell as visited by temporarily changing it. Try all 4 directions. Restore on backtrack.","keyInsight":"Mark visited by setting board[r][c] = '#'. Avoids extra visited array. Always restore after DFS.","timeComplexity":"O(m*n*4^L)","spaceComplexity":"O(L) recursion depth","tags":["backtracking","grid","dfs"],"cpp":"bool dfs(vector<vector<char>>& board, string& word, int r, int c, int idx) {\n    if (idx == word.size()) return true;\n    if (r<0||r>=board.size()||c<0||c>=board[0].size()||board[r][c]!=word[idx]) return false;\n    char tmp = board[r][c];\n    board[r][c] = '#';\n    bool found = dfs(board,word,r+1,c,idx+1)||dfs(board,word,r-1,c,idx+1)||\n                 dfs(board,word,r,c+1,idx+1)||dfs(board,word,r,c-1,idx+1);\n    board[r][c] = tmp;\n    return found;\n}"}]}];
+
+// ─────────────────────────────────────────────
+// STATE
+// ─────────────────────────────────────────────
+let progress = {};    // { [problemId]: 'pending'|'revisit'|'done' }
+let mySolutions = {}; // { [problemId]: {cpp:'',java:'',python:''} }
+let myNotes = {};     // { [problemId]: [{text, date}] }
+let currentScreen = 'home';
+let navStack = [];
+let currentTopic = null;
+let currentProblem = null;
+let activeFilter = 'all';
+let activeInnerTab = 'notes';
+let simState = { duration: 30, qCount: 5, diff: 'All', topics: [] };
+let simSession = null;
+let simIdx = 0;
+let simResults = [];
+let timerInterval = null;
+let timeLeft = 0;
+let showSolution = false;
+
+// Demo: seed some progress
+progress = { 'tp-001':'done','tp-002':'done','tp-003':'revisit','sw-001':'done','bs-001':'done','bs-002':'revisit','ll-001':'done','ll-002':'done','st-001':'done','tr-001':'revisit' };
+
+// ─────────────────────────────────────────────
+// LEETCODE STATE
+// ─────────────────────────────────────────────
+// Your Cloudflare Worker proxy URL — replace after deploying the worker
+// See: /worker/leetcode-proxy.js in the project
+let PROXY_URL = localStorage.getItem('lc_proxy_url') || '';
+
+let lcSession  = localStorage.getItem('lc_session') || '';
+let lcCsrf     = localStorage.getItem('lc_csrf')    || '';
+let lcUsername = localStorage.getItem('lc_username') || '';
+let lcFetchCache = {}; // { [problemId]: { cpp: {...}, java: {...} } }
+
+function isLCConnected() { return !!(lcSession && lcCsrf && lcUsername); }
+
+// ─────────────────────────────────────────────
+// LEETCODE GRAPHQL
+// ─────────────────────────────────────────────
+async function lcGql(query, variables) {
+  if (!PROXY_URL) throw new Error('NO_PROXY');
+  const resp = await fetch(PROXY_URL, {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      'X-LC-Session': lcSession,
+      'X-LC-Csrf': lcCsrf,
+    },
+    body: JSON.stringify({ query, variables }),
+  });
+  if (!resp.ok) throw new Error(`HTTP ${resp.status}`);
+  const data = await resp.json();
+  if (data.errors) throw new Error(data.errors[0]?.message || 'GraphQL error');
+  return data;
+}
+
+function titleToSlug(title) {
+  return title.toLowerCase().replace(/[^a-z0-9\s]/g,'').trim().replace(/\s+/g,'-');
+}
+
+const LANG_MAP = { cpp:'cpp','c++':'cpp',java:'java',python:'python',python3:'python' };
+
+async function fetchLCSubmissions(problem) {
+  if (lcFetchCache[problem.id]) return lcFetchCache[problem.id];
+  const slug = titleToSlug(problem.title);
+
+  // 1. Get submission list for this problem
+  const listData = await lcGql(`
+    query questionSubmissionList($questionSlug: String!, $offset: Int!, $limit: Int!) {
+      questionSubmissionList(questionSlug: $questionSlug, offset: $offset, limit: $limit) {
+        submissions { id statusDisplay lang timestamp runtime memory }
+      }
+    }`, { questionSlug: slug, offset: 0, limit: 20 });
+
+  const subs = listData?.data?.questionSubmissionList?.submissions || [];
+  const accepted = subs.filter(s => s.statusDisplay === 'Accepted');
+  if (!accepted.length) return { found: false, message: 'No accepted submissions yet. Keep going! 💪' };
+
+  // Group by language, take most recent per lang
+  const byLang = {};
+  for (const s of accepted) {
+    const key = LANG_MAP[s.lang] || s.lang;
+    if (!byLang[key]) byLang[key] = s;
+  }
+
+  // 2. Fetch code for each
+  const results = {};
+  await Promise.allSettled(Object.entries(byLang).map(async ([lang, sub]) => {
+    const detail = await lcGql(`
+      query submissionDetails($id: Int!) {
+        submissionDetails(submissionId: $id) {
+          code runtime runtimeDisplay runtimePercentile
+          memory memoryDisplay memoryPercentile timestamp
+          lang { verboseName }
+        }
+      }`, { id: parseInt(sub.id) });
+    const d = detail?.data?.submissionDetails;
+    if (d?.code) {
+      results[lang] = {
+        code: d.code,
+        runtime: d.runtimeDisplay || d.runtime,
+        runtimePct: d.runtimePercentile,
+        memory: d.memoryDisplay || d.memory,
+        memoryPct: d.memoryPercentile,
+        timestamp: d.timestamp * 1000,
+        verboseLang: d.lang?.verboseName || lang,
+      };
+    }
+  }));
+
+  const out = Object.keys(results).length ? { found: true, submissions: results } : { found: false, message: 'Could not fetch code. Try again.' };
+  lcFetchCache[problem.id] = out;
+  return out;
+}
+
+// ─────────────────────────────────────────────
+// LC MODAL
+// ─────────────────────────────────────────────
+function openLCModal() {
+  updateLCModalState();
+  document.getElementById('lc-modal-overlay').classList.add('open');
+}
+function closeLCModal(e) {
+  if (e && e.target !== document.getElementById('lc-modal-overlay')) return;
+  document.getElementById('lc-modal-overlay').classList.remove('open');
+  updateLCStatusBtn();
+  if (currentProblem && activeInnerTab === 'mysol') renderMySol(currentProblem);
+}
+function updateLCModalState() {
+  const connected = isLCConnected();
+  document.getElementById('lc-connected-state').style.display = connected ? 'block' : 'none';
+  document.getElementById('lc-setup-state').style.display = connected ? 'none' : 'block';
+  if (connected) document.getElementById('lc-username-display').textContent = '@' + lcUsername;
+}
+function updateLCStatusBtn() {
+  const btn = document.getElementById('lc-status-btn');
+  if (!btn) return;
+  if (isLCConnected()) {
+    btn.textContent = '🟢 LC';
+    btn.style.color = 'var(--green)';
+    btn.style.borderColor = '#3fb95055';
+    btn.style.background = '#3fb95015';
+  } else {
+    btn.textContent = '🔗 LC';
+    btn.style.color = 'var(--muted)';
+    btn.style.borderColor = 'var(--border)';
+    btn.style.background = 'var(--card)';
+  }
+}
+async function connectLC() {
+  const session = document.getElementById('lc-session-input').value.trim();
+  const csrf    = document.getElementById('lc-csrf-input').value.trim();
+  const errEl   = document.getElementById('lc-error-msg');
+  const btn     = document.getElementById('lc-connect-btn');
+
+  if (!session || !csrf) { showLCError('Please paste both cookie values.'); return; }
+
+  // Check if proxy URL is set
+  if (!PROXY_URL) {
+    // Ask for proxy URL
+    const proxyUrl = window.prompt(
+      '⚠️ Proxy URL needed!\n\nDeploy the Cloudflare Worker first (see /worker/leetcode-proxy.js)\nthen paste your Worker URL here:\n\n(e.g. https://lc-proxy.yourname.workers.dev)',
+      ''
+    );
+    if (!proxyUrl?.trim()) { showLCError('Proxy URL is required to fetch from LeetCode.'); return; }
+    PROXY_URL = proxyUrl.trim();
+    localStorage.setItem('lc_proxy_url', PROXY_URL);
+  }
+
+  btn.disabled = true;
+  btn.textContent = '⏳ Verifying...';
+  errEl.style.display = 'none';
+
+  // Temporarily set creds for the verify call
+  lcSession = session; lcCsrf = csrf;
+
+  try {
+    const data = await lcGql(`query { userStatus { username isSignedIn } }`, {});
+    const status = data?.data?.userStatus;
+    if (!status?.isSignedIn) throw new Error('Not signed in. Check your cookies.');
+    lcUsername = status.username;
+    // Save to localStorage
+    localStorage.setItem('lc_session', session);
+    localStorage.setItem('lc_csrf', csrf);
+    localStorage.setItem('lc_username', lcUsername);
+    updateLCModalState();
+    showToast('✅ Connected as @' + lcUsername);
+  } catch (e) {
+    lcSession = ''; lcCsrf = '';
+    showLCError('Failed: ' + e.message);
+    btn.disabled = false;
+    btn.textContent = '🔗 Connect & Verify';
+  }
+}
+function disconnectLC() {
+  lcSession = ''; lcCsrf = ''; lcUsername = '';
+  lcFetchCache = {};
+  localStorage.removeItem('lc_session');
+  localStorage.removeItem('lc_csrf');
+  localStorage.removeItem('lc_username');
+  updateLCModalState();
+  updateLCStatusBtn();
+  if (currentProblem && activeInnerTab === 'mysol') renderMySol(currentProblem);
+}
+function showLCError(msg) {
+  const el = document.getElementById('lc-error-msg');
+  el.textContent = msg; el.style.display = 'block';
+}
+
+async function fetchFromLC(problemId) {
+  const p = currentProblem;
+  if (!p) return;
+  const btn = document.getElementById('lc-fetch-action-btn');
+  if (btn) { btn.classList.add('loading'); btn.textContent = '⏳ Fetching...'; }
+
+  try {
+    const result = await fetchLCSubmissions(p);
+    if (!result.found) {
+      showToast(result.message, 'orange');
+    } else {
+      // Merge into mySolutions
+      if (!mySolutions[p.id]) mySolutions[p.id] = { cpp:'', java:'', python:'' };
+      let saved = [];
+      for (const [lang, d] of Object.entries(result.submissions)) {
+        if (['cpp','java','python'].includes(lang)) {
+          mySolutions[p.id][lang] = d.code;
+          saved.push(lang.toUpperCase());
+        }
+      }
+      showToast('✅ Fetched: ' + (saved.join(' & ') || Object.keys(result.submissions).join(', ')));
+      // Switch to first fetched lang
+      const firstLang = Object.keys(result.submissions).find(l => ['cpp','java','python'].includes(l));
+      if (firstLang) window._myLang = firstLang;
+    }
+  } catch (e) {
+    if (e.message === 'NO_PROXY') {
+      showToast('⚠️ Deploy the proxy first. Tap 🔗 LC button.', 'orange');
+    } else {
+      showToast('❌ ' + e.message, 'red');
+    }
+  }
+
+  renderMySol(p);
+}
+
+// ─────────────────────────────────────────────
+// NAVIGATION
+// ─────────────────────────────────────────────
+function showScreen(id) {
+  document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+  document.getElementById('screen-'+id).classList.add('active');
+  currentScreen = id;
+  updateTabBars(id);
+  renderScreen(id);
+}
+
+function navigate(id) {
+  navStack.push(currentScreen);
+  showScreen(id);
+  window.scrollTo(0,0);
+}
+
+function goBack() {
+  const prev = navStack.pop();
+  if (prev) { showScreen(prev); } else { showScreen('home'); }
+}
+
+function updateTabBars(active) {
+  const tabs = ['home','revise','simulate','stats','search'];
+  const names = ['Topics','Revise','Simulate','Stats','Search'];
+  const icons = ['📚','🔄','🎯','📊','🔍'];
+  ['home','revise','simulate','stats','search','topic','problem'].forEach(id => {
+    const el = document.getElementById('tabbar-'+id);
+    if (!el) return;
+    el.innerHTML = tabs.map((t,i) => `
+      <div class="tab-item${(active===t||(active==='topic'&&t==='home')||(active==='problem'&&t==='home'))?
+        ' active':''}" onclick="switchTab('${t}')">
+        <span class="tab-icon">${icons[i]}</span>
+        <span class="tab-label">${names[i]}</span>
+      </div>
+    `).join('');
+  });
+}
+
+function switchTab(t) {
+  navStack = [];
+  showScreen(t);
+}
+
+// ─────────────────────────────────────────────
+// RENDER HELPERS
+// ─────────────────────────────────────────────
+function diffColor(d) { return d==='Easy'?'var(--green)':d==='Medium'?'var(--orange)':'var(--red)'; }
+function statusColor(s) { return s==='done'?'var(--green)':s==='revisit'?'var(--orange)':'var(--muted)'; }
+function statusIcon(s) { return s==='done'?'✓':s==='revisit'?'↻':'○'; }
+function progressBar(done, revisit, total) {
+  const dw = total>0?Math.round(done/total*100):0;
+  const rw = total>0?Math.round(revisit/total*100):0;
+  return `<div class="prog-bar"><div class="prog-done" style="width:${dw}%"></div><div class="prog-rev" style="width:${rw}%"></div></div>`;
+}
+
+function renderScreen(id) {
+  if (id === 'home') renderHome();
+  else if (id === 'topic') renderTopic();
+  else if (id === 'problem') renderProblem();
+  else if (id === 'revise') renderRevise();
+  else if (id === 'stats') renderStats();
+  else if (id === 'simulate') renderSimulate();
+  else if (id === 'search') document.getElementById('search-input').focus();
+}
+
+// ─────────────────────────────────────────────
+// HOME
+// ─────────────────────────────────────────────
+function renderHome() {
+  let total=0,done=0,rev=0;
+  TOPICS.forEach(t=>t.problems.forEach(p=>{total++;if(progress[p.id]==='done')done++;if(progress[p.id]==='revisit')rev++;}));
+  document.getElementById('overall-stats').innerHTML = `
+    <div class="stat-box"><div class="stat-val">${total}</div><div class="stat-label">Total</div></div>
+    <div class="stat-box"><div class="stat-val" style="color:var(--green)">${done}</div><div class="stat-label">Done</div></div>
+    <div class="stat-box"><div class="stat-val" style="color:var(--orange)">${rev}</div><div class="stat-label">Revisit</div></div>
+    <div class="stat-box"><div class="stat-val" style="color:var(--muted)">${total-done-rev}</div><div class="stat-label">Left</div></div>
+  `;
+  document.getElementById('topics-list').innerHTML = TOPICS.map(t => {
+    const d = t.problems.filter(p=>progress[p.id]==='done').length;
+    const r = t.problems.filter(p=>progress[p.id]==='revisit').length;
+    return `<div class="topic-card" onclick="openTopic('${t.id}')">
+      <div class="tc-row">
+        <div class="tc-icon" style="background:${t.color}22;border:1px solid ${t.color}44">${t.icon}</div>
+        <div><div class="tc-name">${t.name}</div><div class="tc-desc">${t.description}</div></div>
+      </div>
+      <div class="tc-stats">
+        <span class="tc-done">✓ ${d} done</span>
+        <span class="tc-rev">↻ ${r} revisit</span>
+        <span class="tc-total">/${t.problems.length}</span>
+      </div>
+      ${progressBar(d,r,t.problems.length)}
+    </div>`;
+  }).join('');
+}
+
+// ─────────────────────────────────────────────
+// TOPIC
+// ─────────────────────────────────────────────
+function openTopic(topicId) {
+  currentTopic = TOPICS.find(t=>t.id===topicId);
+  activeFilter = 'all';
+  document.querySelectorAll('.filter-tab').forEach(el=>el.classList.toggle('active',el.dataset.filter==='all'));
+  navigate('topic');
+}
+
+function renderTopic() {
+  if (!currentTopic) return;
+  const t = currentTopic;
+  document.getElementById('topic-header-name').textContent = t.icon+' '+t.name;
+  document.getElementById('topic-header-desc').textContent = t.description;
+  const d = t.problems.filter(p=>progress[p.id]==='done').length;
+  const r = t.problems.filter(p=>progress[p.id]==='revisit').length;
+  document.getElementById('topic-prog-bar').innerHTML = `<div class="prog-done" style="width:${Math.round(d/t.problems.length*100)}%"></div><div class="prog-rev" style="width:${Math.round(r/t.problems.length*100)}%"></div>`;
+  renderProblems();
+}
+
+function setFilter(f, el) {
+  activeFilter = f;
+  document.querySelectorAll('.filter-tab').forEach(x=>x.classList.remove('active'));
+  el.classList.add('active');
+  renderProblems();
+}
+
+function renderProblems() {
+  if (!currentTopic) return;
+  const probs = currentTopic.problems.filter(p => {
+    if (activeFilter==='all') return true;
+    return (progress[p.id]||'pending') === activeFilter;
+  });
+  document.getElementById('problems-list').innerHTML = probs.map(p => {
+    const s = progress[p.id]||'pending';
+    return `<div class="prob-item" onclick="openProblem('${currentTopic.id}','${p.id}')">
+      <div class="prob-row">
+        <div class="status-dot" style="background:${statusColor(s)}"></div>
+        <div class="prob-meta">
+          <div class="prob-num">LC #${p.leetcode}</div>
+          <div class="prob-title">${p.title}</div>
+          <div class="prob-one">${p.oneLiner}</div>
+          <div class="prob-tags">
+            <span class="badge badge-${p.difficulty.toLowerCase()}">${p.difficulty}</span>
+            <span class="pattern-tag">${p.pattern}</span>
+          </div>
+        </div>
+      </div>
+    </div>`;
+  }).join('') || `<div style="text-align:center;padding:40px;color:var(--muted)">No ${activeFilter} problems</div>`;
+}
+
+// ─────────────────────────────────────────────
+// PROBLEM
+// ─────────────────────────────────────────────
+function openProblem(topicId, probId) {
+  const topic = TOPICS.find(t=>t.id===topicId);
+  currentProblem = topic?.problems.find(p=>p.id===probId);
+  if (!currentProblem) return;
+  activeInnerTab = 'notes';
+  navigate('problem');
+}
+
+function renderProblem() {
+  const p = currentProblem;
+  if (!p) return;
+  document.getElementById('prob-main-title').textContent = p.title;
+  document.getElementById('lc-link').textContent = `LC #${p.leetcode} ↗`;
+  document.getElementById('lc-link').href = `https://leetcode.com/problems/${p.title.toLowerCase().replace(/[^a-z0-9]+/g,'-')}/`;
+  document.getElementById('prob-diff').textContent = p.difficulty;
+  document.getElementById('prob-diff').className = `badge badge-${p.difficulty.toLowerCase()}`;
+  document.getElementById('prob-pattern').textContent = p.pattern;
+  document.getElementById('prob-time').textContent = `⏱ ${p.timeComplexity}`;
+  renderStatusBadge();
+  updateLCStatusBtn();
+  setInnerTabContent('notes');
+  // inner tabs
+  document.querySelectorAll('.inner-tab').forEach((el,i)=>el.classList.toggle('active',i===0));
+}
+
+function renderStatusBadge() {
+  const s = progress[currentProblem?.id]||'pending';
+  const colors = {done:'var(--green)',revisit:'var(--orange)',pending:'var(--muted)'};
+  const texts = {done:'✓ Done',revisit:'↻ Revisit',pending:'○ Not Done'};
+  document.getElementById('status-badge-container').innerHTML =
+    `<div class="status-badge" style="color:${colors[s]};border-color:${colors[s]}55;background:${colors[s]}15" onclick="cycleStatus()">${texts[s]}</div>`;
+  ['pending','revisit','done'].forEach(st=>{
+    const el = document.getElementById('sbtn-'+st);
+    if (el) el.classList.toggle('active', s===st);
+  });
+}
+
+function cycleStatus() {
+  const s = progress[currentProblem?.id]||'pending';
+  const next = {pending:'revisit',revisit:'done',done:'pending'}[s];
+  setStatus(next);
+}
+
+function setStatus(s) {
+  if (!currentProblem) return;
+  progress[currentProblem.id] = s;
+  renderStatusBadge();
+}
+
+function revAlert(when) {
+  const toast = document.createElement('div');
+  toast.style.cssText = 'position:fixed;bottom:120px;left:50%;transform:translateX(-50%);background:#161B22;border:1px solid #30363D;color:#e6edf3;padding:10px 20px;border-radius:12px;font-size:13px;font-weight:600;z-index:999;';
+  toast.textContent = `📅 Scheduled for ${when}`;
+  document.body.appendChild(toast);
+  setTimeout(()=>toast.remove(), 2000);
+}
+
+function setInnerTab(tab, el) {
+  activeInnerTab = tab;
+  document.querySelectorAll('.inner-tab').forEach(x=>x.classList.remove('active'));
+  if (el) el.classList.add('active');
+  setInnerTabContent(tab);
+}
+
+function setInnerTabContent(tab) {
+  ['notes','cpp','java','mysol','mynotes'].forEach(t=>{
+    const el = document.getElementById('tab-'+t);
+    if (el) el.style.display = t===tab?'block':'none';
+  });
+  const p = currentProblem;
+  if (!p) return;
+  if (tab==='notes') {
+    document.getElementById('tab-notes').innerHTML = `
+      <div class="note-card"><div class="note-label">💡 TL;DR</div><div class="note-accent">${esc(p.oneLiner)}</div></div>
+      <div class="note-card"><div class="note-label">🧠 Intuition</div><div class="note-body">${esc(p.intuition)}</div></div>
+      <div class="note-card insight"><div class="note-label">🔑 Key Insight</div><div class="note-body note-yellow">${esc(p.keyInsight)}</div></div>
+      <div class="note-card"><div class="note-label">📊 Complexity</div>
+        <div class="complexity-row">
+          <div class="cx-chip"><div class="cx-label">Time</div><div class="cx-val">${esc(p.timeComplexity)}</div></div>
+          <div class="cx-chip"><div class="cx-label">Space</div><div class="cx-val">${esc(p.spaceComplexity)}</div></div>
+        </div>
+      </div>
+      ${p.tags?`<div style="display:flex;flex-wrap:wrap;gap:6px;">${p.tags.map(t=>`<span style="background:var(--card2);border:1px solid var(--border);padding:3px 8px;border-radius:8px;font-size:11px;color:var(--muted)">#${t}</span>`).join('')}</div>`:''}
+      <div style="height:60px"></div>
+    `;
+  } else if (tab==='cpp') {
+    document.getElementById('tab-cpp').innerHTML = `
+      <div style="margin:6px 0 4px 16px;font-size:11px;color:var(--muted);font-weight:600">Reference Solution</div>
+      <div class="code-wrapper">
+        <div class="code-header"><span class="code-lang">C++</span><button class="copy-btn" onclick="copyCode(this,'${escAttr(p.cpp||'')}')">📋 Copy</button></div>
+        <pre>${esc(p.cpp||'// Code coming soon!')}</pre>
+      </div><div style="height:60px"></div>`;
+  } else if (tab==='mysol') {
+    renderMySol(p);
+  } else if (tab==='mynotes') {
+    renderMyNotes(p);
+  }
+}
+
+function renderMySol(p) {
+  const sol = mySolutions[p.id]||{cpp:'',java:'',python:''};
+  const lang = window._myLang||'cpp';
+  const connected = isLCConnected();
+  const cached = lcFetchCache[p.id];
+  const fetchResult = cached?.found ? cached.submissions[lang] : null;
+
+  document.getElementById('tab-mysol').innerHTML = `
+    <!-- LC Fetch Banner -->
+    <div class="lc-fetch-banner ${connected ? 'connected' : 'disconnected'}">
+      <div class="lc-fetch-left">
+        <div class="lc-fetch-title">${connected ? '🟢 Auto-Fetch from LeetCode' : '🔗 Connect LeetCode to Auto-Fetch'}</div>
+        <div class="lc-fetch-sub">${connected
+          ? 'Pulls your accepted submissions — real code, runtime & memory stats'
+          : 'Link once → your solutions auto-appear here. No copy-paste ever.'}</div>
+      </div>
+      ${connected
+        ? `<button class="lc-fetch-btn" id="lc-fetch-action-btn" onclick="fetchFromLC('${p.id}')">⬇ Fetch</button>`
+        : `<button class="lc-fetch-btn" onclick="openLCModal()">Connect</button>`}
+    </div>
+
+    <!-- Fetch result stats (shown after successful fetch) -->
+    ${fetchResult ? `
+      <div class="fetch-result-card">
+        <div class="fetch-result-title">✅ Latest Accepted — ${esc(fetchResult.verboseLang || lang.toUpperCase())}</div>
+        <div class="fetch-result-row">
+          ${fetchResult.runtime ? `
+            <div class="fetch-result-stat">
+              <div class="fetch-result-val">${esc(fetchResult.runtime)}</div>
+              <div class="fetch-result-lbl">${fetchResult.runtimePct ? 'beats '+Math.round(fetchResult.runtimePct)+'%' : 'Runtime'}</div>
+            </div>` : ''}
+          ${fetchResult.memory ? `
+            <div class="fetch-result-stat">
+              <div class="fetch-result-val">${esc(fetchResult.memory)}</div>
+              <div class="fetch-result-lbl">${fetchResult.memoryPct ? 'beats '+Math.round(fetchResult.memoryPct)+'%' : 'Memory'}</div>
+            </div>` : ''}
+          ${fetchResult.timestamp ? `
+            <div class="fetch-result-stat">
+              <div class="fetch-result-val">${new Date(fetchResult.timestamp).toLocaleDateString('en-US',{month:'short',day:'numeric',year:'2-digit'})}</div>
+              <div class="fetch-result-lbl">Submitted</div>
+            </div>` : ''}
+        </div>
+      </div>` : ''}
+
+    <!-- Language tabs -->
+    <div class="lang-tabs">
+      ${['cpp','java','python'].map(l=>`
+        <div class="lang-tab${lang===l?' active':''}" onclick="setMyLang('${l}')">
+          ${l.toUpperCase()}${sol[l]?'<span class="lang-dot"></span>':''}
+        </div>`).join('')}
+    </div>
+
+    <!-- Code display -->
+    ${sol[lang] ? `
+      <div class="code-wrapper">
+        <div class="code-header">
+          <span class="code-lang">Your ${lang.toUpperCase()}</span>
+          <button class="copy-btn" onclick="editMySol()">✏️ Edit</button>
+        </div>
+        <pre>${esc(sol[lang])}</pre>
+      </div>
+    ` : `
+      <div class="code-wrapper">
+        <div class="code-header"><span class="code-lang">Your ${lang.toUpperCase()}</span><button class="copy-btn" onclick="editMySol()">+ Manual</button></div>
+        <div class="empty-code" onclick="editMySol()">
+          <div class="empty-icon">${connected ? '⬇️' : '📋'}</div>
+          <div class="empty-title">No solution yet</div>
+          <div class="empty-text">${connected ? 'Tap "⬇ Fetch" above to pull from LeetCode' : 'Connect LeetCode above to auto-fetch, or tap here to paste manually'}</div>
+        </div>
+      </div>
+    `}
+    <div style="height:60px"></div>
+  `;
+}
+
+function setMyLang(l) { window._myLang=l; renderMySol(currentProblem); }
+
+function editMySol() {
+  const p = currentProblem;
+  const lang = window._myLang||'cpp';
+  const sol = mySolutions[p.id]||{};
+  const code = window.prompt(`Paste your ${lang.toUpperCase()} solution for "${p.title}":\n(In the app, you get a full code editor)`, sol[lang]||'');
+  if (code !== null) {
+    if (!mySolutions[p.id]) mySolutions[p.id]={cpp:'',java:'',python:''};
+    mySolutions[p.id][lang] = code;
+    renderMySol(p);
+    const t = document.createElement('div');
+    t.style.cssText='position:fixed;bottom:120px;left:50%;transform:translateX(-50%);background:#161B22;border:1px solid #3fb95044;color:var(--green);padding:10px 20px;border-radius:12px;font-size:13px;font-weight:600;z-index:999;';
+    t.textContent='✅ Solution saved!';
+    document.body.appendChild(t);
+    setTimeout(()=>t.remove(),2000);
+  }
+}
+
+function renderMyNotes(p) {
+  const notes = myNotes[p.id]||[];
+  document.getElementById('tab-mynotes').innerHTML = `
+    <div class="note-input-card">
+      <div class="note-input-label">📝 Log this attempt</div>
+      <textarea class="note-textarea" id="note-input-${p.id}" placeholder="What did you observe? Where did you struggle?"></textarea>
+      <div class="quick-chips">
+        ${['✅ Solved it independently!','🔍 Needed a hint','😅 Forgot the approach','⏱️ TLE first try','🧠 Understood now','📌 Key insight clicked!'].map(q=>
+          `<span class="qchip" onclick="document.getElementById('note-input-${p.id}').value='${q.replace(/'/g,"\\'")}'">${q}</span>`
+        ).join('')}
+      </div>
+      <button class="add-btn" onclick="addNote('${p.id}')">Add Note</button>
+    </div>
+    ${notes.length>0?`
+      <div class="note-history">
+        <div class="nh-label">History (${notes.length})</div>
+        ${notes.map((n,i)=>`
+          <div class="note-log-item">
+            <div class="nli-date">${new Date(n.date).toLocaleString()}</div>
+            <div class="nli-text">${esc(n.text)}</div>
+          </div>`).join('')}
+      </div>
+    `:`<div style="text-align:center;padding:30px;color:var(--muted);font-size:13px">No notes yet. Log your attempts!</div>`}
+    <div style="height:60px"></div>
+  `;
+}
+
+function addNote(pid) {
+  const inp = document.getElementById('note-input-'+pid);
+  if (!inp||!inp.value.trim()) return;
+  if (!myNotes[pid]) myNotes[pid]=[];
+  myNotes[pid].unshift({text:inp.value.trim(),date:Date.now()});
+  renderMyNotes(currentProblem);
+}
+
+// ─────────────────────────────────────────────
+// REVISE
+// ─────────────────────────────────────────────
+const demoReviseProblems = [
+  {id:'tp-003',title:'Remove Duplicates from Sorted Array',topicName:'Two Pointers',topicIcon:'👆',difficulty:'Easy',oneLiner:'Keep only unique elements from sorted array in-place',keyInsight:'Start writePtr at 1. Compare nums[i] with nums[writePtr-1]. If different, write.',status:'revisit'},
+  {id:'bs-002',title:'Koko Eating Bananas',topicName:'Binary Search',topicIcon:'🔍',difficulty:'Medium',oneLiner:'Find minimum eating speed to finish all bananas in h hours',keyInsight:'hours(speed) = sum of ceil(pile/speed). Binary search on speed.',status:'revisit'},
+  {id:'tr-001',title:'Level Order Traversal',topicName:'Trees',topicIcon:'🌳',difficulty:'Medium',oneLiner:'Return level-by-level traversal of binary tree',keyInsight:'Record queue size at start of each level → process exactly that many nodes.',status:'done'},
+  {id:'ll-002',title:'Linked List Cycle',topicName:'Linked List',topicIcon:'🔗',difficulty:'Easy',oneLiner:'Detect if a linked list has a cycle',keyInsight:'Fast pointer laps slow pointer if cycle exists.',status:'done'},
+];
+let revExpandedIdx = -1;
+function renderRevise() {
+  document.getElementById('revise-cards').innerHTML = demoReviseProblems.map((p,i)=>`
+    <div class="rev-card">
+      <div class="rev-card-header" onclick="toggleRevCard(${i})">
+        <div class="status-dot" style="background:${p.status==='revisit'?'var(--orange)':'var(--green)'}"></div>
+        <div class="rev-card-meta">
+          <div class="rev-card-title">${esc(p.title)}</div>
+          <div class="rev-card-sub">
+            <span>${p.topicIcon} ${p.topicName}</span>
+            <span style="color:${diffColor(p.difficulty)}">${p.difficulty}</span>
+          </div>
+        </div>
+        <span style="font-size:11px;color:var(--muted)">${revExpandedIdx===i?'▲':'▼'}</span>
+      </div>
+      ${revExpandedIdx===i?`
+        <div class="rev-card-body">
+          <div class="rev-oneliner">${esc(p.oneLiner)}</div>
+          <div class="rev-insight">🔑 ${esc(p.keyInsight)}</div>
+          <a class="open-prob-btn" href="#" onclick="event.preventDefault();openRevProblem('${p.id}')">View Full Problem + My Solution →</a>
+          <div class="fb-label">How'd it go?</div>
+          <div class="fb-grid">
+            <div class="fb-btn" style="color:var(--red);border-color:#f8514944;background:#f8514915" onclick="revFeedback(${i},'😵 Forgot')">😵 Forgot</div>
+            <div class="fb-btn" style="color:var(--orange);border-color:#f0883e44;background:#f0883e15" onclick="revFeedback(${i},'😓 Hard')">😓 Hard</div>
+            <div class="fb-btn" style="color:var(--accent);border-color:#58a6ff44;background:#58a6ff15" onclick="revFeedback(${i},'👍 Good')">👍 Good</div>
+            <div class="fb-btn" style="color:var(--green);border-color:#3fb95044;background:#3fb95015" onclick="revFeedback(${i},'🚀 Easy')">🚀 Easy</div>
+          </div>
+        </div>
+      `:''}
+    </div>
+  `).join('');
+}
+
+function toggleRevCard(i) { revExpandedIdx = revExpandedIdx===i?-1:i; renderRevise(); }
+function openRevProblem(id) {
+  for (const t of TOPICS) {
+    const p = t.problems.find(x=>x.id===id);
+    if (p) { currentTopic=t; currentProblem=p; navigate('problem'); return; }
+  }
+}
+function revFeedback(i, label) {
+  revAlert('Revision scheduled! ('+label+')');
+  revExpandedIdx = -1;
+  demoReviseProblems.splice(i,1);
+  renderRevise();
+}
+
+// ─────────────────────────────────────────────
+// STATS
+// ─────────────────────────────────────────────
+function renderStats() {
+  // Heatmap
+  const today = new Date();
+  const cells = [];
+  for (let i=83;i>=0;i--) {
+    const d=new Date(today.getTime()-i*86400000);
+    const count = Math.random()<0.4?Math.floor(Math.random()*5)+1:0;
+    cells.push({count,date:d});
+  }
+  const firstDay = cells[0].date.getDay();
+  const padded = Array(firstDay).fill(null).concat(cells);
+  const weeks=[];
+  for(let i=0;i<padded.length;i+=7) weeks.push(padded.slice(i,i+7));
+  const getColor=c=>c===0?'var(--border2)':c===1?'#58a6ff33':c===2?'#58a6ff66':c<=4?'#58a6ffaa':'var(--accent)';
+  document.getElementById('heatmap-container').innerHTML = `
+    <div class="heatmap-grid">${weeks.map(week=>`
+      <div class="hm-week">${week.map(cell=>cell?
+        `<div class="hm-cell" style="background:${getColor(cell.count)}" title="${cell.count} problems"></div>`
+        :`<div class="hm-cell" style="background:transparent"></div>`
+      ).join('')}</div>`).join('')}</div>
+    <div class="hm-legend">
+      <span class="hm-legend-lbl">Less</span>
+      ${[0,1,2,3,5].map(c=>`<div class="hm-legend-cell" style="background:${getColor(c)}"></div>`).join('')}
+      <span class="hm-legend-lbl">More</span>
+    </div>
+  `;
+  // Topics
+  document.getElementById('stats-topics').innerHTML = TOPICS.map(t=>{
+    const d=t.problems.filter(p=>progress[p.id]==='done').length;
+    const r=t.problems.filter(p=>progress[p.id]==='revisit').length;
+    return `<div class="topic-row" onclick="openTopic('${t.id}')">
+      <span class="t-icon">${t.icon}</span>
+      <div class="t-info">
+        <div class="t-name-row">
+          <span class="t-name">${t.name}</span>
+          <span class="t-frac"><span style="color:var(--green)">${d}</span>/${t.problems.length}</span>
+        </div>
+        ${progressBar(d,r,t.problems.length)}
+      </div>
+    </div>`;
+  }).join('');
+}
+
+// ─────────────────────────────────────────────
+// SIMULATE
+// ─────────────────────────────────────────────
+function renderSimulate() {
+  const chips = document.getElementById('topic-chips');
+  if (chips) chips.innerHTML = TOPICS.map(t=>`
+    <div class="topic-chip-btn${simState.topics.includes(t.id)?' active':''}" onclick="toggleSimTopic('${t.id}',this)">
+      <span>${t.icon}</span><span>${t.name}</span>
+    </div>`).join('');
+}
+
+function setDur(v,el) { simState.duration=v; document.querySelectorAll('#dur-opts .opt-btn').forEach(x=>x.classList.remove('active')); el.classList.add('active'); }
+function setQCount(v,el) { simState.qCount=v; document.querySelectorAll('#q-count-opts .opt-btn').forEach(x=>x.classList.remove('active')); el.classList.add('active'); }
+function setDiff(v,el) { simState.diff=v; document.querySelectorAll('#diff-opts .opt-btn').forEach(x=>x.classList.remove('active')); el.classList.add('active'); }
+function toggleSimTopic(id,el) {
+  simState.topics = simState.topics.includes(id)?simState.topics.filter(x=>x!==id):[...simState.topics,id];
+  el.classList.toggle('active');
+  document.getElementById('topic-hint').textContent = simState.topics.length===0?'(All topics selected)':`${simState.topics.length} topic(s) selected`;
+}
+function toggleAllTopics() {
+  simState.topics = simState.topics.length===TOPICS.length?[]:TOPICS.map(t=>t.id);
+  renderSimulate();
+  document.getElementById('topic-hint').textContent = simState.topics.length===0?'(All topics selected)':`${simState.topics.length} topic(s) selected`;
+}
+
+function startSim() {
+  const pool=[];
+  const topicsToUse = simState.topics.length>0?simState.topics:TOPICS.map(t=>t.id);
+  for(const t of TOPICS) {
+    if(!topicsToUse.includes(t.id)) continue;
+    for(const p of t.problems) {
+      if(simState.diff!=='All'&&p.difficulty!==simState.diff) continue;
+      pool.push({...p,topicId:t.id,topicName:t.name,topicIcon:t.icon});
+    }
+  }
+  if(pool.length===0){alert('No problems match. Try adjusting filters.');return;}
+  const shuffled=pool.sort(()=>Math.random()-.5);
+  simSession=shuffled.slice(0,Math.min(simState.qCount,shuffled.length));
+  simIdx=0; simResults=[]; showSolution=false;
+  timeLeft=simState.duration*60;
+  document.getElementById('sim-setup').style.display='none';
+  document.getElementById('sim-session').style.display='flex';
+  document.getElementById('sim-results').style.display='none';
+  startTimer();
+  renderSimSession();
+}
+
+function startTimer() {
+  clearInterval(timerInterval);
+  updateTimer();
+  timerInterval=setInterval(()=>{
+    timeLeft--;
+    updateTimer();
+    if(timeLeft<=0){clearInterval(timerInterval);alert('⏰ Time Up!');}
+  },1000);
+}
+
+function updateTimer() {
+  const m=Math.floor(timeLeft/60).toString().padStart(2,'0');
+  const s=(timeLeft%60).toString().padStart(2,'0');
+  const el=document.getElementById('timer-display');
+  const badge=document.getElementById('timer-badge');
+  if(el){el.textContent=`⏱ ${m}:${s}`;}
+  if(badge)badge.className='timer-badge'+(timeLeft<300?' timer-warn':'');
+  document.getElementById('sim-progress').textContent=`${simIdx+1}/${simSession.length}`;
+}
+
+function renderSimSession() {
+  if (!simSession) return;
+  const p = simSession[simIdx];
+  const mySol = mySolutions[p.id];
+  const hasMySol = mySol&&(mySol.cpp||mySol.java||mySol.python);
+  showSolution = false;
+  document.getElementById('sim-dots').innerHTML=simSession.map((_,i)=>
+    `<div class="p-dot${i<simIdx?' done':i===simIdx?' current':''}"></div>`).join('');
+  document.getElementById('sim-content').innerHTML = `
+    <div class="prob-card">
+      <div style="display:flex;gap:8px;flex-wrap:wrap;align-items:center;margin-bottom:10px">
+        <span style="font-size:11px;font-weight:700;color:${diffColor(p.difficulty)}">${p.difficulty}</span>
+        <span style="font-size:11px;background:var(--card2);border:1px solid var(--border);padding:2px 8px;border-radius:6px;color:var(--muted)">LC #${p.leetcode}</span>
+        <span style="font-size:11px;color:var(--muted)">${p.topicIcon} ${p.topicName}</span>
+      </div>
+      <div style="font-size:20px;font-weight:800;margin-bottom:6px">${esc(p.title)}</div>
+      <div style="font-size:13px;color:var(--muted)">${esc(p.pattern)}</div>
+    </div>
+    <div id="sim-reveal-section">
+      <div class="reveal-btn" onclick="revealSimSol()">👁 Reveal Approach</div>
+    </div>
+    <div id="sim-solution-section" style="display:none">
+      <div class="sol-card">
+        <div class="sol-section"><div class="sol-sec-label">💡 Approach</div><div style="font-size:14px;color:var(--accent);font-weight:600">${esc(p.oneLiner)}</div></div>
+        <div class="sol-section"><div class="sol-sec-label">🧠 Intuition</div><div style="font-size:13px;color:var(--text);line-height:1.5">${esc(p.intuition)}</div></div>
+        <div class="sol-section insight"><div class="sol-sec-label">🔑 Key Insight</div><div style="font-size:13px;color:var(--yellow);line-height:1.5">${esc(p.keyInsight)}</div></div>
+        ${hasMySol?`<div class="sol-section mysol"><div class="sol-sec-label" style="color:var(--purple)">💻 Your Previous Solution</div><pre style="font-size:11px;color:var(--purple);padding:8px 0;background:none;border:0;margin:0;overflow-x:auto">${esc((mySol.cpp||mySol.java||mySol.python).substring(0,300)+'...')}</pre></div>`:''}
+      </div>
+      <div class="fb-section">
+        <div class="fb-title">How did it go?</div>
+        <div class="fb-grid2">
+          <div class="fb-card" style="color:var(--red);border-color:#f8514944;background:#f8514915" onclick="simAnswer('forgot')">😵 Forgot<br>Completely</div>
+          <div class="fb-card" style="color:var(--orange);border-color:#f0883e44;background:#f0883e15" onclick="simAnswer('hard')">😓 Solved<br>With Hints</div>
+          <div class="fb-card" style="color:var(--accent);border-color:#58a6ff44;background:#58a6ff15" onclick="simAnswer('good')">👍 Solved<br>OK</div>
+          <div class="fb-card" style="color:var(--green);border-color:#3fb95044;background:#3fb95015" onclick="simAnswer('easy')">🚀 Solved<br>Easily!</div>
+        </div>
+      </div>
+    </div>
+    <div style="height:80px"></div>
+  `;
+}
+
+function revealSimSol() {
+  document.getElementById('sim-reveal-section').style.display='none';
+  document.getElementById('sim-solution-section').style.display='block';
+}
+
+function simAnswer(quality) {
+  simResults.push({problem:simSession[simIdx],quality});
+  if(simIdx+1>=simSession.length) {
+    clearInterval(timerInterval);
+    showSimResults();
+  } else {
+    simIdx++;
+    updateTimer();
+    renderSimSession();
+  }
+}
+
+function showSimResults() {
+  document.getElementById('sim-session').style.display='none';
+  document.getElementById('sim-results').style.display='block';
+  const score={forgot:0,hard:1,good:2,easy:3};
+  const total=simResults.reduce((s,r)=>s+(score[r.quality]||0),0);
+  const max=simResults.length*3;
+  const pct=Math.round(total/max*100);
+  const emoji=pct>=80?'🏆':pct>=60?'💪':pct>=40?'📚':'🔄';
+  const label=pct>=80?'Excellent!':pct>=60?'Good Job!':pct>=40?'Keep Practicing':'Review Required';
+  const qColors={forgot:'var(--red)',hard:'var(--orange)',good:'var(--accent)',easy:'var(--green)'};
+  const qLabels={forgot:'😵 Forgot',hard:'😓 Hard',good:'👍 Good',easy:'🚀 Easy'};
+  document.getElementById('score-card').innerHTML=`
+    <div class="score-emoji">${emoji}</div>
+    <div class="score-val" style="color:var(--accent)">${pct}%</div>
+    <div class="score-label">${label}</div>
+    <div class="score-detail">${simResults.length} problems · ${total}/${max} pts</div>
+  `;
+  document.getElementById('results-list').innerHTML=`
+    <div class="results-title">Problem Breakdown</div>
+    ${simResults.map((r,i)=>`
+      <div class="result-item">
+        <div class="ri-left">
+          <span class="ri-num">#${i+1}</span>
+          <div><div class="ri-title">${esc(r.problem.title)}</div><div class="ri-topic">${r.problem.topicIcon} ${r.problem.topicName}</div></div>
+        </div>
+        <div class="ri-q" style="color:${qColors[r.quality]};border-color:${qColors[r.quality]}55;background:${qColors[r.quality]}15">${qLabels[r.quality]}</div>
+      </div>
+    `).join('')}
+  `;
+}
+
+function endSim() {
+  if(confirm('End the current interview session?')) {
+    clearInterval(timerInterval);
+    simSession=null;
+    document.getElementById('sim-session').style.display='none';
+    document.getElementById('sim-setup').style.display='block';
+    document.getElementById('sim-results').style.display='none';
+  }
+}
+function resetSim() {
+  simSession=null; simResults=[]; simIdx=0;
+  document.getElementById('sim-results').style.display='none';
+  document.getElementById('sim-setup').style.display='block';
+}
+
+// ─────────────────────────────────────────────
+// SEARCH
+// ─────────────────────────────────────────────
+function doSearch(q) {
+  const container = document.getElementById('search-results');
+  if(q.length<2){container.innerHTML='<div style="text-align:center;padding:30px;color:var(--muted);font-size:13px">Type at least 2 characters to search</div>';return;}
+  const ql=q.toLowerCase();
+  const results=[];
+  TOPICS.forEach(t=>t.problems.forEach(p=>{
+    if(p.title.toLowerCase().includes(ql)||p.oneLiner.toLowerCase().includes(ql)||(p.tags||[]).some(tg=>tg.includes(ql))||String(p.leetcode).includes(q))
+      results.push({...p,topicId:t.id,topicName:t.name,topicIcon:t.icon});
+  }));
+  container.innerHTML = results.length?results.map(p=>`
+    <div class="search-result" onclick="searchOpen('${p.topicId}','${p.id}')">
+      <div style="display:flex;gap:8px;align-items:center;margin-bottom:5px">
+        <div class="status-dot" style="background:${statusColor(progress[p.id]||'pending')}"></div>
+        <span style="font-size:14px;font-weight:700">${esc(p.title)}</span>
+      </div>
+      <div style="font-size:12px;color:var(--text2);margin-bottom:5px">${esc(p.oneLiner)}</div>
+      <div style="display:flex;gap:6px;flex-wrap:wrap">
+        <span class="badge badge-${p.difficulty.toLowerCase()}">${p.difficulty}</span>
+        <span class="pattern-tag">${p.topicIcon} ${p.topicName}</span>
+        <span class="pattern-tag">LC #${p.leetcode}</span>
+      </div>
+    </div>`).join(''):
+    `<div style="text-align:center;padding:30px;color:var(--muted);font-size:13px">No results for "${esc(q)}"</div>`;
+}
+
+function searchOpen(topicId, probId) {
+  const t=TOPICS.find(x=>x.id===topicId);
+  currentTopic=t;
+  currentProblem=t?.problems.find(p=>p.id===probId);
+  navigate('problem');
+}
+
+// ─────────────────────────────────────────────
+// UTILS
+// ─────────────────────────────────────────────
+function esc(s=''){return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');}
+function escAttr(s=''){return String(s).replace(/'/g,'&#39;').replace(/"/g,'&quot;');}
+function copyCode(btn, code) {
+  navigator.clipboard?.writeText(code).catch(()=>{});
+  btn.textContent='✓ Copied!';
+  setTimeout(()=>btn.textContent='📋 Copy',2000);
+}
+
+// ─────────────────────────────────────────────
+// TOAST UTILITY
+// ─────────────────────────────────────────────
+function showToast(msg, color) {
+  const borderColor = color==='red' ? '#f8514944' : color==='orange' ? '#f0883e44' : '#3fb95044';
+  const textColor   = color==='red' ? '#F85149' : color==='orange' ? '#F0883E' : '#3FB950';
+  const toast = document.createElement('div');
+  toast.style.cssText = `position:fixed;bottom:120px;left:50%;transform:translateX(-50%);background:#161B22;border:1px solid ${borderColor};color:${textColor};padding:10px 20px;border-radius:12px;font-size:13px;font-weight:600;z-index:9999;white-space:nowrap;box-shadow:0 4px 20px #00000088;`;
+  toast.textContent = msg;
+  document.body.appendChild(toast);
+  setTimeout(()=>toast.remove(), 3000);
+}
+
+// ─────────────────────────────────────────────
+// INIT
+// ─────────────────────────────────────────────
+showScreen('home');
+// Restore LC status badge if already connected
+setTimeout(updateLCStatusBtn, 100);
+</script>
+</body>
+</html>
